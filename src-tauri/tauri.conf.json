@@ -1,0 +1,49 @@
+{
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "beforeBuildCommand": "bun run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "pwcca-auto",
+    "version": "0.0.0"
+  },
+  "tauri": {
+    "systemTray": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": true
+    },
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "dialog": {
+        "all": false,
+        "message": true
+      },
+      "window": {
+        "all": false,
+        "close": true,
+        "hide": true,
+        "startDragging": true
+      }
+    },
+    "windows": [
+     
+    ],
+    "security": {
+      "csp": null
+    },
+    "bundle": {
+      "active": true,
+      "targets": "msi",
+      "identifier": "ymg.pwcca.auto",
+      "icon": [
+        "icons/icon.ico"
+      ]
+    }
+  }
+}
