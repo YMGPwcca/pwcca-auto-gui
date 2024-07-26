@@ -8,34 +8,34 @@ use mods::{
   display::{get_all_frequencies, get_current_frequency, set_new_frequency, turn_off_monitor},
 };
 use sysinfo::System;
-use tauri::{CustomMenuItem, SystemTray, SystemTrayEvent, SystemTrayMenu};
+use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
 
-// #[tauri::command]
-// fn get_refresh_rate() -> u32 {
-//   let refresh_rate = get_current_frequency();
-//   return refresh_rate;
-// }
+#[tauri::command]
+fn get_refresh_rate() -> u32 {
+  let refresh_rate = get_current_frequency();
+  return refresh_rate;
+}
 
-// #[tauri::command]
-// fn set_refresh_rate() -> bool {
-// let refresh_rate = get_current_frequency();
-// let max_refresh_rate = get_all_frequencies().last().copied().unwrap();
-// let result = std::panic::catch_unwind(|| set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 }));
+#[tauri::command]
+fn set_refresh_rate() -> bool {
+  let refresh_rate = get_current_frequency();
+  let max_refresh_rate = get_all_frequencies().last().copied().unwrap();
+  let result = std::panic::catch_unwind(|| set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 }));
 
-//   if result.is_err() {
-//     return false;
-//   }
-//   return true;
-// }
+  if result.is_err() {
+    return false;
+  }
+  return true;
+}
 
-// #[tauri::command]
-// fn turn_off_screen() {
-//   turn_off_monitor()
-// }
+#[tauri::command]
+fn turn_off_screen() {
+  turn_off_monitor()
+}
 
 fn main() {
   let s = System::new_all();
-  let new_all = s.processes_by_name("pwcca-auto");
+  let new_all = s.processes_by_name("pcm");
   for i in new_all {
     if std::process::id() != i.pid().as_u32() {
       std::process::exit(0);
@@ -49,61 +49,43 @@ fn main() {
   // Tauri
   tauri::Builder::default()
     .system_tray(
-      SystemTray::new().with_tooltip("Pwcca Auto").with_menu(
-        SystemTrayMenu::new()
-          .add_item(CustomMenuItem::new(
-            "refresh_rate",
-            format!("Refresh Rate: {} Hz", get_current_frequency()),
-          ))
-          .add_native_item(tauri::SystemTrayMenuItem::Separator)
-          .add_item(CustomMenuItem::new("quit", "Quit")),
-      ),
+      SystemTray::new().with_menu(SystemTrayMenu::new().add_item(CustomMenuItem::new("quit".to_string(), "Quit"))),
     )
     .on_system_tray_event(|app, event| match event {
-      // SystemTrayEvent::LeftClick { .. } => {
-      //   let window = app.get_window("main").unwrap();
-      //   window.show().unwrap();
-      //   window.set_focus().unwrap();
-      // }
-      SystemTrayEvent::MenuItemClick { id, .. } => {
-        let item_handle = app.tray_handle().get_item(&id);
-
-        match id.as_str() {
-          "refresh_rate" => {
-            let refresh_rate = get_current_frequency();
-            let max_refresh_rate = get_all_frequencies().last().copied().unwrap();
-            set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 });
-
-            item_handle
-              .set_title(format!("Refresh Rate: {} Hz", get_current_frequency()))
-              .unwrap();
-          }
-          "quit" => std::process::exit(0),
-          _ => {}
+      SystemTrayEvent::LeftClick { .. } => {
+        let window = app.get_window("main").unwrap();
+        window.show().unwrap();
+      }
+      SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
+        "quit" => {
+          let window = app.get_window("main").unwrap();
+          window.close().unwrap();
         }
+        _ => {}
+      },
+      _ => {}
+    })
+    .invoke_handler(tauri::generate_handler![
+      get_refresh_rate,
+      set_refresh_rate,
+      turn_off_screen,
+    ])
+    .on_window_event(|event| match event.event() {
+      tauri::WindowEvent::CloseRequested { api, .. } => {
+        event.window().hide().unwrap();
+        api.prevent_close();
       }
       _ => {}
     })
-    // .invoke_handler(tauri::generate_handler![
-    //   get_refresh_rate,
-    //   set_refresh_rate,
-    //   turn_off_screen,
-    // ])
-    // .on_window_event(|event| match event.event() {
-    //   tauri::WindowEvent::CloseRequested { api, .. } => {
-    //     event.window().hide().unwrap();
-    //     api.prevent_close();
-    //   }
-    //   tauri::WindowEvent::Focused(focused) => {
-    //     if focused == &false {
-    //       event.window().hide().unwrap()
-    //     }
-    //   }
-    //   _ => {}
-    // })
     .build(tauri::generate_context!())
     .expect("error while running tauri application")
-    .run(move |_, _| {});
+    .run(move |app, event| match event {
+      tauri::RunEvent::Ready => {
+        let window = app.get_window("main").unwrap();
+        window.hide().unwrap();
+      }
+      _ => {}
+    });
 }
 
 fn media_thread() -> Result<(), mods::media::types::error::AudioDeviceError> {

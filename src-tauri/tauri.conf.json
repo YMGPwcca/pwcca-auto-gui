@@ -32,7 +32,20 @@
       }
     },
     "windows": [
-     
+      {
+        "label": "main",
+        "title": "PwccaAuto for PwccaPC",
+        "width": 450,
+        "height": 900,
+        "x": 1400,
+        "y": 90,
+        "focus": false,
+        "maximizable": false,
+        "minimizable": false,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true
+      }
     ],
     "security": {
       "csp": null
