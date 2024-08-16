@@ -9,4 +9,5 @@ export default function RAMFrameCard() {
       </InfoCard>
     </FrameCard>
   )
+  
 }

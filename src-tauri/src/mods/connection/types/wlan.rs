@@ -2,7 +2,7 @@ use windows::Win32::NetworkManagement::WiFi::{self, WLAN_AVAILABLE_NETWORK, WLAN
 
 #[allow(dead_code)]
 #[derive(Debug)]
-pub struct WLAN {
+pub struct Wlan {
   pub kind: String,
   pub name: String,
   pub signal_quality: u32,
@@ -15,7 +15,7 @@ pub struct WLAN {
 }
 
 #[allow(dead_code)]
-impl WLAN {
+impl Wlan {
   pub fn new(network: &WLAN_AVAILABLE_NETWORK, bss_entries: Vec<WLAN_BSS_ENTRY>) -> Self {
     Self {
       kind: match network.dot11BssType {
@@ -25,7 +25,10 @@ impl WLAN {
         _ => format!("Unknown ({:?})", network.dot11BssType),
       },
 
-      name: String::from_utf8_lossy(&network.dot11Ssid.ucSSID[..network.dot11Ssid.uSSIDLength as usize]).to_string(),
+      name: String::from_utf8_lossy(
+        &network.dot11Ssid.ucSSID[..network.dot11Ssid.uSSIDLength as usize],
+      )
+      .to_string(),
 
       signal_quality: network.wlanSignalQuality,
 
@@ -57,7 +60,7 @@ impl WLAN {
         WiFi::DOT11_AUTH_ALGO_WPA => "WPA".to_string(),
         WiFi::DOT11_AUTH_ALGO_WPA_PSK => "WPA-PSK".to_string(),
         WiFi::DOT11_AUTH_ALGO_WPA_NONE => "WPA-None (Not Supported)".to_string(),
-        WiFi::DOT11_AUTH_ALGO_RSNA => "WPA2-Enterprise".to_string(),
+        WiFi::DOT11_AUTH_ALGO_RSNA => "RSNA".to_string(),
         WiFi::DOT11_AUTH_ALGO_RSNA_PSK => "WPA2-Personal".to_string(),
         WiFi::DOT11_AUTH_ALGO_WPA3 => "WPA3-Enterprise 192-bit".to_string(),
         WiFi::DOT11_AUTH_ALGO_WPA3_SAE => "WPA3-Personal".to_string(),
@@ -74,35 +77,41 @@ impl WLAN {
       },
 
       // https://en.wikipedia.org/wiki/IEEE_802.11
-      ratio_type: Vec::from_iter(network.dot11PhyTypes[..network.uNumberOfPhyTypes as usize].iter())
-        .iter()
-        .map(|&e| match *e {
-          WiFi::dot11_phy_type_unknown => "Unknown".to_string(),
-          WiFi::dot11_phy_type_fhss => "802.11 FHSS".to_string(),
-          WiFi::dot11_phy_type_dsss => "802.11 DSSS".to_string(),
-          WiFi::dot11_phy_type_irbaseband => "IR Baseband".to_string(),
-          WiFi::dot11_phy_type_ofdm => "802.11a".to_string(),
-          WiFi::dot11_phy_type_hrdsss => "802.11b".to_string(),
-          WiFi::dot11_phy_type_erp => "802.11g".to_string(),
-          WiFi::dot11_phy_type_ht => "802.11n".to_string(),
-          WiFi::dot11_phy_type_vht => "802.11ac".to_string(),
-          WiFi::dot11_phy_type_he => "802.11ax".to_string(),
-          WiFi::dot11_phy_type_eht => "802.11be".to_string(),
-          _ => format!("Unknown ({:?})", e),
-        })
-        .collect(),
+      ratio_type: Vec::from_iter(
+        network.dot11PhyTypes[..network.uNumberOfPhyTypes as usize].iter(),
+      )
+      .iter()
+      .map(|&e| match *e {
+        WiFi::dot11_phy_type_unknown => "Unknown".to_string(),
+        WiFi::dot11_phy_type_fhss => "802.11 FHSS".to_string(),
+        WiFi::dot11_phy_type_dsss => "802.11 DSSS".to_string(),
+        WiFi::dot11_phy_type_irbaseband => "IR Baseband".to_string(),
+        WiFi::dot11_phy_type_ofdm => "802.11a".to_string(),
+        WiFi::dot11_phy_type_hrdsss => "802.11b".to_string(),
+        WiFi::dot11_phy_type_erp => "802.11g".to_string(),
+        WiFi::dot11_phy_type_ht => "802.11n".to_string(),
+        WiFi::dot11_phy_type_vht => "802.11ac".to_string(),
+        WiFi::dot11_phy_type_he => "802.11ax".to_string(),
+        WiFi::dot11_phy_type_eht => "802.11be".to_string(),
+        _ => format!("Unknown ({:?})", e),
+      })
+      .collect(),
 
       // https://en.wikipedia.org/wiki/List_of_WLAN_channels
       bands: {
         let mut map: Vec<f32> = bss_entries
           .iter()
           .map(|&e| {
-            let freq_in_mhz = format!("{:.1}", e.ulChCenterFrequency / 1_000).parse::<i32>().unwrap();
+            let freq_in_mhz = format!("{:.1}", e.ulChCenterFrequency / 1_000)
+              .parse::<i32>()
+              .unwrap();
             match freq_in_mhz {
               2401..=2495 => 2.4,
               5150..=5895 => 5.0,
               5925..=7125 => 6.0,
-              _ => format!("{:.1}", freq_in_mhz as f32 / 1_000.0).parse::<f32>().unwrap(),
+              _ => format!("{:.1}", freq_in_mhz as f32 / 1_000.0)
+                .parse::<f32>()
+                .unwrap(),
             }
           })
           .collect();

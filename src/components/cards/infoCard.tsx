@@ -6,4 +6,5 @@ export default function InfoCard(props: React.PropsWithChildren<{ special?: true
       {props.children}
     </div>
   )
+  
 }

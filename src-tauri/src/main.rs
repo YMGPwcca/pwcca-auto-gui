@@ -1,14 +1,33 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod config;
 mod mods;
+mod threading;
+mod types;
 
+use std::{process::exit, thread};
+
+use config::Config;
 use mods::{
-  connection::{is_ethernet_plugged_in, set_wifi_state},
   display::{get_all_frequencies, get_current_frequency, set_new_frequency, turn_off_monitor},
+  process::get_processes_by_name,
+  startup::task_scheduler::{create_startup_task, delete_startup_task},
 };
-use sysinfo::System;
-use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu};
+use threading::*;
+use types::Events;
+
+use anyhow::Result;
+use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, SystemTrayMenuItem};
+use windows::{
+  core::w,
+  Win32::{
+    Foundation::HWND,
+    UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK, MB_SYSTEMMODAL},
+  },
+};
+
+pub static mut CONFIG: Config = Config::new();
 
 #[tauri::command]
 fn get_refresh_rate() -> u32 {
@@ -17,15 +36,10 @@ fn get_refresh_rate() -> u32 {
 }
 
 #[tauri::command]
-fn set_refresh_rate() -> bool {
+fn set_refresh_rate() {
   let refresh_rate = get_current_frequency();
   let max_refresh_rate = get_all_frequencies().last().copied().unwrap();
-  let result = std::panic::catch_unwind(|| set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 }));
-
-  if result.is_err() {
-    return false;
-  }
-  return true;
+  set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 });
 }
 
 #[tauri::command]
@@ -33,36 +47,128 @@ fn turn_off_screen() {
   turn_off_monitor()
 }
 
-fn main() {
-  let s = System::new_all();
-  let new_all = s.processes_by_name("pcm");
-  for i in new_all {
-    if std::process::id() != i.pid().as_u32() {
-      std::process::exit(0);
-    }
+fn main() -> Result<()> {
+  // Check if another instance is running
+  if get_processes_by_name("PwccaAuto")?.len() > 1 {
+    unsafe {
+      MessageBoxW(
+        HWND::default(),
+        w!("Another instance is already running"),
+        w!("Error"),
+        MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
+      )
+    };
+
+    exit(1);
   }
 
   // Threading
-  let _ = std::thread::spawn(move || media_thread());
-  let _ = std::thread::spawn(move || connection_thread());
+  let _ = thread::Builder::new()
+    .name("Power_Thread".to_string())
+    .spawn(power_thread);
+  let _ = thread::Builder::new()
+    .name("Media_Thread".to_string())
+    .spawn(media_thread);
+  let _ = thread::Builder::new()
+    .name("Connection_Thread".to_string())
+    .spawn(connection_thread);
+  let _ = thread::Builder::new()
+    .name("Taskbar_Thread".to_string())
+    .spawn(taskbar_thread);
 
   // Tauri
   tauri::Builder::default()
     .system_tray(
-      SystemTray::new().with_menu(SystemTrayMenu::new().add_item(CustomMenuItem::new("quit".to_string(), "Quit"))),
+      SystemTray::new().with_tooltip("Pwcca Auto").with_menu(
+        SystemTrayMenu::new()
+          .add_item(CustomMenuItem::new(Events::Startup, "Run with Windows"))
+          .add_native_item(SystemTrayMenuItem::Separator)
+          .add_item(CustomMenuItem::new(Events::Discord, "Discord"))
+          .add_item(CustomMenuItem::new(Events::Ethernet, "Ethernet"))
+          .add_item(CustomMenuItem::new(Events::Taskbar, "Taskbar"))
+          .add_native_item(SystemTrayMenuItem::Separator)
+          .add_item(CustomMenuItem::new(Events::TurnOffMonitor, "Turn off monitor"))
+          .add_item(CustomMenuItem::new(
+            Events::RefreshRate,
+            format!("Refresh Rate: {} Hz", get_current_frequency()),
+          ))
+          .add_native_item(SystemTrayMenuItem::Separator)
+          .add_item(CustomMenuItem::new(Events::Exit, "Quit")),
+      ),
     )
     .on_system_tray_event(|app, event| match event {
       SystemTrayEvent::LeftClick { .. } => {
         let window = app.get_window("main").unwrap();
-        window.show().unwrap();
-      }
-      SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
-        "quit" => {
-          let window = app.get_window("main").unwrap();
-          window.close().unwrap();
+
+        if window.is_visible().unwrap() {
+          window.hide().unwrap();
+        } else {
+          window.show().unwrap();
+          window.set_focus().expect("Cannot focus window");
         }
-        _ => {}
-      },
+      }
+      SystemTrayEvent::MenuItemClick { id, .. } => {
+        let item_handle = app.tray_handle().get_item(&id);
+
+        match id.as_str() {
+          "Startup" => {
+            unsafe { CONFIG.toggle_startup() };
+
+            if unsafe { CONFIG.startup } {
+              create_startup_task().expect("Cannot create startup task");
+            } else {
+              delete_startup_task().expect("Cannot delete startup task");
+            }
+
+            item_handle.set_selected(unsafe { CONFIG.startup }).unwrap();
+            unsafe { CONFIG.write().expect("Cannot write config") };
+          }
+          "Discord" => {
+            unsafe { CONFIG.toggle_discord() };
+
+            item_handle.set_selected(unsafe { CONFIG.discord }).unwrap();
+            unsafe { CONFIG.write().expect("Cannot write config") };
+          }
+          "Ethernet" => {
+            unsafe { CONFIG.toggle_ethernet() };
+
+            item_handle.set_selected(unsafe { CONFIG.ethernet }).unwrap();
+            unsafe { CONFIG.write().expect("Cannot write config") };
+          }
+          "Taskbar" => {
+            unsafe { CONFIG.toggle_taskbar() };
+
+            item_handle.set_selected(unsafe { CONFIG.taskbar }).unwrap();
+            unsafe { CONFIG.write().expect("Cannot write config") };
+          }
+          "TurnOffMonitor" => turn_off_monitor(),
+          "RefreshRate" => {
+            let refresh_rate = get_current_frequency();
+            let max_refresh_rate = get_all_frequencies().last().copied().unwrap();
+            set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 });
+
+            item_handle
+              .set_title(format!("Refresh Rate: {} Hz", get_current_frequency()))
+              .unwrap();
+          }
+          "Exit" => exit(0),
+          _ => {}
+        }
+      }
+      _ => {}
+    })
+    .on_window_event(|event| match event.event() {
+      tauri::WindowEvent::CloseRequested { api, .. } => {
+        event.window().hide().unwrap();
+        api.prevent_close();
+      }
+
+      tauri::WindowEvent::Focused(focused) => {
+        if !focused {
+          event.window().hide().unwrap();
+        }
+      }
+
       _ => {}
     })
     .invoke_handler(tauri::generate_handler![
@@ -70,84 +176,12 @@ fn main() {
       set_refresh_rate,
       turn_off_screen,
     ])
-    .on_window_event(|event| match event.event() {
-      tauri::WindowEvent::CloseRequested { api, .. } => {
-        event.window().hide().unwrap();
-        api.prevent_close();
-      }
-      _ => {}
-    })
     .build(tauri::generate_context!())
     .expect("error while running tauri application")
     .run(move |app, event| match event {
-      tauri::RunEvent::Ready => {
-        let window = app.get_window("main").unwrap();
-        window.hide().unwrap();
-      }
+      tauri::RunEvent::Ready => app.get_window("main").unwrap().hide().unwrap(),
       _ => {}
     });
-}
 
-fn media_thread() -> Result<(), mods::media::types::error::AudioDeviceError> {
-  // Initialize the media thread
-  println!("  + Running Media Thread");
-
-  mods::media::init()?;
-
-  let mut connected = false;
-  let discord_executable = String::from("Discord.exe");
-
-  loop {
-    // Get all output devices
-    let all_outputs = mods::media::enumerate_audio_devices(&mods::media::types::device::DeviceType::Output)?;
-
-    // Check if there are multiple output devices
-    if all_outputs.len() > 1 {
-      // Get the current default output device
-      let current_output = mods::media::get_default_device(&mods::media::types::device::DeviceType::Output)?;
-
-      // Check if Discord is running and recording from default input device
-      let programs = mods::media::get_active_audio_applications(&mods::media::types::device::DeviceType::Input)?;
-
-      if programs.contains(&discord_executable) {
-        connected = true;
-
-        // Switch to headphones if Discord is recording and speakers are the default
-        if current_output.device_type == "Speakers" {
-          let headphones = all_outputs
-            .iter()
-            .find(|device| device.device_type == "Headphones")
-            .unwrap();
-
-          mods::media::change_default_output(headphones.device_id)?
-        }
-      } else if connected {
-        connected = false;
-
-        // Switch back to speakers if Discord is not recording and headphones are the default
-        if current_output.device_type == "Headphones" {
-          let headphones = all_outputs
-            .iter()
-            .find(|device| device.device_type == "Speakers")
-            .unwrap();
-
-          mods::media::change_default_output(headphones.device_id)?
-        }
-      }
-    }
-
-    std::thread::sleep(std::time::Duration::from_secs(1));
-  }
-}
-
-fn connection_thread() {
-  // Initialize the connection thread
-  println!("  + Running Connection Thread");
-
-  loop {
-    let _ = set_wifi_state(!is_ethernet_plugged_in());
-
-    // println!("LOG FROM CONNECTION THREAD");
-    std::thread::sleep(std::time::Duration::from_secs(1));
-  }
+  Ok(())
 }

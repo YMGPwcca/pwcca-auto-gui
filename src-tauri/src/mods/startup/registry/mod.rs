@@ -1,0 +1,133 @@
+pub mod types;
+
+use std::fs;
+
+use anyhow::Result;
+use types::{
+  regkey::RegKey,
+  startup_status::{StartupGroup, StartupState},
+};
+use windows::{
+  core::{HSTRING, PCWSTR},
+  Win32::System::Registry::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
+};
+
+pub fn get_all_startup_items() -> Result<Vec<StartupState>> {
+  let mut items = get_startup_items(StartupGroup::User)?;
+  items.append(&mut get_startup_items(StartupGroup::System)?);
+
+  Ok(items)
+}
+
+pub fn get_startup_items(group: StartupGroup) -> Result<Vec<StartupState>> {
+  let mut items = get_startup_items_in_registry(&group)?;
+  items.append(&mut get_startup_items_in_folder(&group)?);
+
+  let states = get_startup_item_state(&group, &items)?;
+
+  Ok(states)
+}
+
+fn get_startup_items_in_registry(group: &StartupGroup) -> Result<Vec<String>> {
+  let mut items = Vec::new();
+
+  let root = match group {
+    StartupGroup::User => HKEY_CURRENT_USER,
+    StartupGroup::System => HKEY_LOCAL_MACHINE,
+  };
+
+  let paths = match group {
+    StartupGroup::User => vec![
+      String::from(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run\"), // Run
+    ],
+    StartupGroup::System => vec![
+      String::from(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run\"), // Run
+      String::from(r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run\"), // Run32
+    ],
+  };
+
+  for path in paths {
+    let key = RegKey::open(root, PCWSTR(HSTRING::from(&path).as_ptr()))?;
+    items.append(&mut key.enum_value());
+  }
+
+  Ok(items)
+}
+
+fn get_startup_items_in_folder(group: &StartupGroup) -> Result<Vec<String>> {
+  let mut items = Vec::new();
+
+  let dir_path = match group {
+    StartupGroup::User => std::env::var("APPDATA")?,
+    StartupGroup::System => std::env::var("PROGRAMDATA")?,
+  } + r"\Microsoft\Windows\Start Menu\Programs\Startup";
+
+  let dir_items = fs::read_dir(dir_path)?;
+
+  for item in dir_items {
+    items.push(item?.file_name().to_string_lossy().to_string());
+  }
+
+  Ok(items)
+}
+
+fn get_startup_item_state(group: &StartupGroup, items: &[String]) -> Result<Vec<StartupState>> {
+  let mut result: Vec<StartupState> = Vec::new();
+
+  let root = match group {
+    StartupGroup::User => HKEY_CURRENT_USER,
+    StartupGroup::System => HKEY_LOCAL_MACHINE,
+  };
+
+  let approved_path =
+    String::from(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\");
+
+  let user_key = RegKey::open(root, PCWSTR(HSTRING::from(&approved_path).as_ptr()))?;
+
+  for key in user_key.enum_key() {
+    let startup_key = RegKey::open(
+      root,
+      PCWSTR(HSTRING::from(approved_path.clone() + &key).as_ptr()),
+    )?;
+
+    for value in startup_key.enum_value() {
+      let data = RegKey::open(
+        root,
+        PCWSTR(HSTRING::from(approved_path.clone() + &key).as_ptr()),
+      )?
+      .is_startup_enabled(PCWSTR(HSTRING::from(&value).as_ptr()))?;
+
+      let contain = items.contains(&String::from(&value));
+      if contain {
+        result.push(StartupState {
+          group: *group,
+          path: approved_path.clone() + &key,
+          name: String::from(&value),
+          status: data,
+        });
+      }
+    }
+  }
+
+  Ok(result)
+}
+
+pub fn set_startup_item_state(name: &str, status: bool) -> Result<()> {
+  let all = get_all_startup_items()?;
+
+  let find = all
+    .iter()
+    .find(|e| e.name == name)
+    .expect("Cannot find startup item");
+
+  let root = match find.group {
+    StartupGroup::User => HKEY_CURRENT_USER,
+    StartupGroup::System => HKEY_LOCAL_MACHINE,
+  };
+
+  let key = RegKey::open(root, PCWSTR(HSTRING::from(&find.path).as_ptr()))?;
+
+  key.set_value(name, status);
+
+  Ok(())
+}

@@ -1,5 +1,4 @@
 import { invoke } from '@tauri-apps/api/tauri'
-import { message } from '@tauri-apps/api/dialog'
 import { useEffect, useState } from 'react'
 
 import style from '../../../../../components/styles/Comps.module.css'
@@ -19,9 +18,7 @@ export default function ChangeRefreshRate() {
   }, [])
 
   const onClick = async () => {
-    let success = (await invoke('set_refresh_rate'))
-    if (!success) await message("YOU DONKEY", { title: "PwccaAuto", type: 'error', okLabel: 'Close' })
-
+    await invoke('set_refresh_rate')
     await getDisplayFrequencyData()
   }
 

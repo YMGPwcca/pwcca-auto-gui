@@ -1,20 +1,20 @@
 use windows::{
-  core::PSTR,
+  core::PCWSTR,
   Win32::{
     Foundation::{LPARAM, WPARAM},
     Graphics::Gdi::{
-      ChangeDisplaySettingsA, EnumDisplaySettingsA, CDS_GLOBAL, CDS_UPDATEREGISTRY, DEVMODEA, DISP_CHANGE_SUCCESSFUL,
-      ENUM_CURRENT_SETTINGS, ENUM_DISPLAY_SETTINGS_MODE,
+      ChangeDisplaySettingsW, EnumDisplaySettingsW, CDS_GLOBAL, CDS_UPDATEREGISTRY, DEVMODEW,
+      DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS, ENUM_DISPLAY_SETTINGS_MODE,
     },
-    UI::WindowsAndMessaging::{GetForegroundWindow, SendMessageA, SC_MONITORPOWER, WM_SYSCOMMAND},
+    UI::WindowsAndMessaging::{GetForegroundWindow, SendMessageW, SC_MONITORPOWER, WM_SYSCOMMAND},
   },
 };
 
 #[allow(dead_code)]
-fn get_dev_mode_a() -> DEVMODEA {
+fn get_dev_mode() -> DEVMODEW {
   unsafe {
     let mut dev_mode = std::mem::zeroed();
-    EnumDisplaySettingsA(PSTR::null(), ENUM_CURRENT_SETTINGS, &mut dev_mode).unwrap();
+    EnumDisplaySettingsW(PCWSTR::null(), ENUM_CURRENT_SETTINGS, &mut dev_mode).unwrap();
 
     dev_mode
   }
@@ -28,7 +28,12 @@ pub fn get_all_frequencies() -> Vec<u32> {
     let mut index = 0;
 
     loop {
-      if EnumDisplaySettingsA(PSTR::null(), ENUM_DISPLAY_SETTINGS_MODE(index), &mut dev_mode) == false {
+      if EnumDisplaySettingsW(
+        PCWSTR::null(),
+        ENUM_DISPLAY_SETTINGS_MODE(index),
+        &mut dev_mode,
+      ) == false
+      {
         break;
       }
 
@@ -45,7 +50,7 @@ pub fn get_all_frequencies() -> Vec<u32> {
 
 #[allow(dead_code)]
 pub fn get_current_frequency() -> u32 {
-  get_dev_mode_a().dmDisplayFrequency
+  get_dev_mode().dmDisplayFrequency
 }
 
 #[allow(dead_code)]
@@ -59,15 +64,15 @@ pub fn set_new_frequency(mut frequency: u32) {
     frequency = max_frequency;
   }
 
-  let dev_mode = DEVMODEA {
+  let dev_mode = DEVMODEW {
     dmDisplayFrequency: frequency,
-    ..get_dev_mode_a()
+    ..get_dev_mode()
   };
 
   unsafe {
-    let result = ChangeDisplaySettingsA(Some(&dev_mode), CDS_GLOBAL | CDS_UPDATEREGISTRY);
+    let result = ChangeDisplaySettingsW(Some(&dev_mode), CDS_GLOBAL | CDS_UPDATEREGISTRY);
     if result != DISP_CHANGE_SUCCESSFUL {
-      panic!("Unable to change display settings!");
+      panic!("[PCM] Unable to change display settings!");
     }
   }
 }
@@ -75,10 +80,10 @@ pub fn set_new_frequency(mut frequency: u32) {
 #[allow(dead_code)]
 pub fn turn_off_monitor() {
   unsafe {
-    SendMessageA(
+    SendMessageW(
       GetForegroundWindow(),
       WM_SYSCOMMAND,
-      WPARAM(SC_MONITORPOWER.try_into().unwrap()),
+      WPARAM(SC_MONITORPOWER as usize),
       LPARAM(2isize),
     )
   };
