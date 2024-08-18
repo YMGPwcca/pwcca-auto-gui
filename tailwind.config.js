@@ -6,14 +6,6 @@ export default {
   ],
   theme: {
     extend: {
-      screens: {
-        pc: {
-          raw: '(min-width: 1366px) and (min-height: 768px) and (hover: hover) and (pointer: fine)'
-        },
-        mobile: {
-          raw: '(max-width: 1365px), (max-height: 767px), (hover: none), (pointer: coarse)'
-        }
-      },
       colors: {
         gray: {
           900: '#202225',

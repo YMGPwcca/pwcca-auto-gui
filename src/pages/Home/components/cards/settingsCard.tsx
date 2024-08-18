@@ -1,13 +1,11 @@
 import FrameCard from '../../../../components/cards/frameCard'
 import InfoCard from '../../../../components/cards/infoCard'
 
-export default function RAMFrameCard() {
+export default function SettingsFrameCard() {
   return (
-    <FrameCard name={'RAM'} className='pc:order-3'>
+    <FrameCard name={'Settings'}>
       <InfoCard>
-
       </InfoCard>
     </FrameCard>
   )
-  
 }

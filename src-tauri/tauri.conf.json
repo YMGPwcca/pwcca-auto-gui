@@ -28,17 +28,16 @@
         "all": false,
         "close": true,
         "hide": true,
-        "startDragging": true
+        "startDragging": true,
+        "setAlwaysOnTop": true,
+        "setPosition": true,
+        "setSize": true
       }
     },
     "windows": [
       {
         "label": "main",
         "title": "PwccaAuto for PwccaPC",
-        "width": 450,
-        "height": 900,
-        "x": 1400,
-        "y": 90,
         "focus": false,
         "maximizable": false,
         "minimizable": false,

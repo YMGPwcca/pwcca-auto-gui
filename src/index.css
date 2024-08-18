@@ -8,7 +8,7 @@
   }
   
   .content-container {
-    @apply flex flex-col bg h-screen mobile:min-h-screen w-screen text-white overflow-auto
+    @apply flex flex-col bg h-screen min-h-screen w-screen text-white overflow-auto
   }
 }
 

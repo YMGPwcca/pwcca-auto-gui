@@ -1,4 +1,4 @@
-use std::{sync, thread, time::Duration};
+use std::{thread, time::Duration};
 
 use crate::mods::{
   connection::{is_ethernet_plugged_in, set_wifi_state},
@@ -11,7 +11,6 @@ use crate::mods::{
 };
 
 use anyhow::Result;
-use tauri::{AppHandle, Manager};
 use windows::Win32::Foundation::WIN32_ERROR;
 
 use crate::CONFIG;
@@ -123,23 +122,4 @@ pub fn taskbar_thread() {
 
     std::thread::sleep(Duration::from_secs(1));
   }
-}
-
-pub fn channel_thread(handle: AppHandle, receiver: sync::mpsc::Receiver<bool>) {
-  receiver.iter().for_each(|e| {
-    match e {
-      _ => {
-        handle
-          .tray_handle()
-          .set_menu(super::build_tray_menu())
-          .expect("Cannot set tray menu");
-
-        handle
-          .get_window("main")
-          .unwrap()
-          .eval("window.location.reload();")
-          .expect("Cannot reload window");
-      }
-    };
-  })
 }
