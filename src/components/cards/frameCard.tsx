@@ -1,8 +1,8 @@
-export default function FrameCard(props: React.PropsWithChildren<{ name?: string, className?: string }>) {
+export default function FrameCard(props: React.PropsWithChildren<{ name?: string }>) {
   return (
-    <div className={`flex flex-col mx-auto min-h-[60px] ${props.className || ''}`}>
+    <div id={props.name} className={`flex flex-col`}>
+      <div className='font-bold text-2xl text-gray-400 mb-2 text-center'>{props.name}</div>
       {props.children}
-      <div className='text-center font-bold text-2xl pb-2 order-first'>{props.name}</div>
     </div>
   )
 }

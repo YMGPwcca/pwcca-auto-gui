@@ -75,30 +75,29 @@ fn main() -> Result<()> {
     exit(1);
   }
 
-  unsafe { CONFIG = Config::read()? }
+  // Read config from file
+  unsafe { CONFIG = Config::read()? };
 
   // Tauri
   tauri::Builder::default()
     .setup(|app| {
-      let window = app.get_window("main").unwrap();
-      let monitor = window.current_monitor()?.unwrap();
-      let taskbar_size = get_taskbar_size();
-      let startup_service_created = TaskScheduler::new()?.is_service_created("PwccaAutoGUI");
-
       // Sync config with actual settings
       unsafe {
-        if CONFIG.startup != startup_service_created {
+        if CONFIG.startup != TaskScheduler::new()?.is_service_created("PwccaAutoGUI") {
           CONFIG.toggle_startup();
           CONFIG.write().expect("Cannot write config");
         }
       }
 
-      // Config app size and position
+      let window = app.get_window("main").unwrap();
+      let monitor = window.current_monitor()?.unwrap();
       let monitor_size = monitor.size();
-      let app_size = PhysicalSize::new(350u32, 700u32);
+      let app_size = PhysicalSize::new(350u32, 750u32);
+
+      // Config app size and position
       window.set_position(PhysicalPosition::new(
         monitor_size.width - (app_size.width + 20),
-        (monitor_size.height - taskbar_size.height) - (app_size.height + 20),
+        (monitor_size.height - get_taskbar_size().height) - (app_size.height + 20),
       ))?;
       window.set_size(app_size)?;
       window.set_focus()?;
@@ -134,6 +133,16 @@ fn main() -> Result<()> {
           if window.is_visible().unwrap() {
             window.hide().unwrap();
           } else {
+            let app_size = window.outer_size().expect("Cannot get app size");
+            let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
+            let monitor_size = monitor.size();
+
+            window
+              .set_position(PhysicalPosition::new(
+                monitor_size.width - (app_size.width + 20),
+                (monitor_size.height - get_taskbar_size().height) - (app_size.height + 20),
+              ))
+              .expect("Cannot set window position");
             window.show().expect("Cannot show window");
             window.set_focus().expect("Cannot focus window");
           }

@@ -10,8 +10,8 @@ use crate::{
 use tauri::AppHandle;
 
 #[tauri::command]
-pub fn get_refresh_rate() -> u32 {
-  get_current_frequency()
+pub fn get_refresh_rate() -> bool {
+  get_current_frequency() != 60
 }
 
 #[tauri::command]

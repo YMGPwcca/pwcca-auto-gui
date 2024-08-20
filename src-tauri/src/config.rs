@@ -70,7 +70,7 @@ impl Config {
     if path.exists() {
       Ok(serde_json::from_str(&std::fs::read_to_string(path)?)?)
     } else {
-      Ok(Config::write(&Config::new())?)
+      Ok(Config::new())
     }
   }
 
