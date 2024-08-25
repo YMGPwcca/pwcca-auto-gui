@@ -5,9 +5,12 @@ import { useNavigate } from 'react-router-dom'
 export default function SettingButton({ name, get, set }: { name: string, get: string, set: string }) {
   const navigate = useNavigate()
 
+  const ref = useRef<HTMLDivElement>(null)
+
   const [state, setState] = useState(false)
   const [clicking, setClicking] = useState(false)
   const [num, setNum] = useState(0)
+  const [scale, setScale] = useState(1)
 
   function getToggleData() {
     invoke(get).then(state => setState(state as boolean))
@@ -16,7 +19,24 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
 
   useEffect(() => getToggleData(), [])
   useEffect(() => {
-    if (num === 200) navigate('/setting/' + name)
+    if (num > 190) {
+      setScale(30)
+
+      for (const item of ref.current?.children!) {
+        item.classList.add('hidden')
+      }
+
+      setTimeout(() => {
+        navigate('/setting/' + name)
+      }, 1000)
+    }
+
+    if (num === 0) {
+      setScale(1)
+      for (const item of ref.current?.children!) {
+        item.classList.remove('hidden')
+      }
+    }
   }, [navigate, num])
 
   async function onClick() {
@@ -74,12 +94,14 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
 
   return (
     <div
-      className={`cursor-pointer flex flex-col text-center justify-center rounded-lg bg-tier2 h-full transition-all duration-100 ${!clicking ? 'scale-100' : 'scale-90'}`}
+      style={scale > 1 ? { transform: `scale(${scale})`, transitionDuration: '1000ms', zIndex: 100 } : {}}
+      ref={ref}
+      className={`cursor-pointer flex flex-col text-center justify-center rounded-lg bg-tier2 transition-all duration-75 ${!clicking ? 'scale-100' : 'scale-90'}`}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerLeave}
     >
-      <span className='text-lg text-gray-400'>{num > 30 ? 'Navigating...' : name}</span>
+      <span className='text-lg'>{num > 30 ? 'Navigating...' : name}</span>
       <div
         style={{
           backgroundSize: `${num < 30 ? 0 : num - 30}% 100%`,

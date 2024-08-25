@@ -24,7 +24,7 @@ export default function ToggleButton({ name, get, set }: { name: string, get: st
       onPointerLeave={() => setClicking(false)}
       onClick={onClick}
     >
-      <span className='text-lg text-gray-400'>{name}</span>
+      <span className='text-lg'>{name}</span>
       <div className={`${state ? 'bg-[#69E5FB]' : 'bg-[#FB6969]'} w-8 h-3 mt-2 rounded-lg mx-auto`}></div>
     </div>
   )

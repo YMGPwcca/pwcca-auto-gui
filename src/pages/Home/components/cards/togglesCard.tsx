@@ -1,6 +1,7 @@
-import FrameCard from '../../../../components/cards/frameCard'
-import ItemCard from '../../../../components/cards/itemCard'
+import FrameCard from '../../../../components/card/frameCard'
+import ItemCard from '../../../../components/card/itemCard'
 
+import BlankButton from '../buttons/blank'
 import ToggleButton from '../buttons/toggle'
 
 export default function TogglesFrameCard() {
@@ -10,7 +11,7 @@ export default function TogglesFrameCard() {
         <ToggleButton name='Refresh Rate' get='get_refresh_rate' set='set_refresh_rate' />
         <ToggleButton name='Startup' get='get_run_with_windows' set='set_run_with_windows' />
         <ToggleButton name='Ethernet' get='get_ethernet_state' set='set_ethernet_state' />
-        <ToggleButton name='Taskbar' get='get_taskbar_state' set='set_taskbar_state' />
+        <BlankButton />
       </ItemCard>
     </FrameCard>
   )
