@@ -19,25 +19,15 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
 
   useEffect(() => getToggleData(), [])
   useEffect(() => {
-    if (num > 190) {
+    if (num === 150) {
       setScale(30)
 
-      for (const item of ref.current?.children!) {
+      for (const item of ref.current?.children!)
         item.classList.add('hidden')
-      }
 
-      setTimeout(() => {
-        navigate('/setting/' + name)
-      }, 1000)
+      setTimeout(() => navigate('/setting/' + name), 550 /* animation length - (30scale + 10ms) */)
     }
-
-    if (num === 0) {
-      setScale(1)
-      for (const item of ref.current?.children!) {
-        item.classList.remove('hidden')
-      }
-    }
-  }, [navigate, num])
+  }, [num])
 
   async function onClick() {
     await invoke(set)
@@ -52,7 +42,7 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
 
     down.current = setInterval(() => {
       setNum(prev => {
-        if (prev < 200) return prev + 1
+        if (prev < 150) return prev + 1
 
         clearInterval(down.current)
         return prev
@@ -94,9 +84,9 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
 
   return (
     <div
-      style={scale > 1 ? { transform: `scale(${scale})`, transitionDuration: '1000ms', zIndex: 100 } : {}}
       ref={ref}
-      className={`cursor-pointer flex flex-col text-center justify-center rounded-lg bg-tier2 transition-all duration-75 ${!clicking ? 'scale-100' : 'scale-90'}`}
+      style={scale > 1 ? { transform: `scale(${scale})`, transitionDuration: '750ms', zIndex: 100 } : { cursor: 'pointer' }}
+      className={`flex flex-col text-center justify-center rounded-lg bg-tier2 transition-all duration-75 ${!clicking ? 'scale-100' : 'scale-90'}`}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerLeave}
@@ -110,6 +100,5 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
         className='bg-left-bottom bg-gradient-to-r bg-no-repeat duration-[1ms] from-[#F8FB69] to-[#F8FB69] w-8 h-3 mt-2 rounded-lg mx-auto'
       ></div>
     </div>
-
   )
 }

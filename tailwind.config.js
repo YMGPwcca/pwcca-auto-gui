@@ -23,8 +23,8 @@ export default {
       },
 
       animation: {
-        'fade-in': 'fadeIn 1s linear',
-        'fade-out': 'fadeOut .8s linear',
+        'fade-in': 'fadeIn .3s linear',
+        'fade-out': 'fadeOut .3s linear',
       },
 
       keyframes: {
