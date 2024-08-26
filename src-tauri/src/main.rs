@@ -102,6 +102,7 @@ fn main() -> Result<()> {
       window.set_size(app_size)?;
       window.set_focus()?;
       window.set_always_on_top(true)?;
+      window.set_skip_taskbar(true)?;
 
       // Threading
       let _ = thread::Builder::new()
