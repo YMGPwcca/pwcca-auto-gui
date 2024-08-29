@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-export default function SettingLayout() {
+import SVGBackArrow from '../../components/svg/SVGBackArrow'
+
+export default function SettingLayout({ children }: React.PropsWithChildren) {
   const navigate = useNavigate()
   const location = useLocation()
   const ref = useRef<HTMLDivElement>(null)
@@ -22,13 +24,13 @@ export default function SettingLayout() {
       <div className='m-auto bg-tier0 py-4 w-[350px] h-[750px] pc:border-2 pc:rounded-xl pc:border-tier3 mobile:w-full mobile:h-full'>
 
         <div className='flex flex-col m-auto'>
-          <div className='flex flex-row text-center mx-auto'>
-            <div className='font-bold text-2xl text-center' onClick={() => navigate(-1)}>BACK</div>
-            <div className='font-bold text-2xl text-tier9 text-center'>{location.pathname.split('/')[2]}</div>
+          <div className='flex flex-row text-center mx-auto relative w-full'>
+            <SVGBackArrow className='w-6 h-6 absolute left-1 top-1/2 -translate-y-1/2 cursor-pointer' onClick={() => navigate(-1)} />
+            <div className='font-bold text-2xl text-tier9 text-center m-auto'>{location.pathname.split('/')[2]}</div>
           </div>
 
-          <div className='m-auto flex flex-col gap-5'>
-            A
+          <div className='m-auto mt-2 flex flex-col'>
+            {children}
           </div>
         </div>
 
