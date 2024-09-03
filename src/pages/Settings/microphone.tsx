@@ -16,12 +16,22 @@ export default function Microphone() {
     setList([...list, inputRef.current!.value])
   }
 
+  const onClick = () => {
+    setTimeout(() => inputRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+  }
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    inputRef.current?.scrollIntoView({ behavior: 'instant' })
+    if (e.key === 'Enter') addList()
+  }
+
   return (
     <SettingLayout>
-      <div className='h-full w-full gap-3 flex flex-col relative'>
+      <span className='mx-auto font-bold text-xl'>Program List</span>
 
+      <div className='h-full w-full gap-3 flex flex-col relative'>
         {/* Application list */}
-        <div className='flex flex-col bg-tier2 w-72 h-px550 mx-auto rounded-lg'>
+        <div className='flex flex-col bg-tier2 w-72 h-px500 mx-auto rounded-lg'>
           <div className='inline-flex flex-col w-full h-full overflow-auto align-top'>
             {list.map(item => (
               <div className='flex flex-row text-lg my-1 mx-2 border-b-tier4 [&:not(:last-child)]:border-b-2'>
@@ -34,18 +44,21 @@ export default function Microphone() {
         </div>
 
         {/* Button list */}
-        <div className='w-72 h-[8%] flex mx-auto gap-2'>
-          <div className='bg-tier2 rounded-lg h-full w-[79%] flex'>
+        <div className='w-72 h-[54px] flex mx-auto gap-2'>
+          <div className='bg-tier2 rounded-lg h-full w-[226px] flex mx-auto'>
             <input
               className='w-4/5 m-auto bg-transparent outline-none border-b-2 border-b-tier4 text-center'
               ref={inputRef}
               type='text'
               placeholder='Add more programs'
-              onKeyDown={e => e.key === 'Enter' && addList()}
+              autoComplete='off'
+              autoCorrect='off'
+              onClick={onClick}
+              onKeyDown={onKeyDown}
             />
           </div>
           <div
-            className='cursor-pointer bg-tier2 rounded-lg h-full w-[54px] flex'
+            className='cursor-pointer bg-tier2 rounded-lg h-full w-[54px] flex mx-auto'
             onClick={addList}
           >
             <SVGPlus className='w-5 h-5 m-auto' />
@@ -53,7 +66,7 @@ export default function Microphone() {
         </div>
 
         {/* Notice */}
-        <div className='flex flex-col bottom-0 absolute left-1/2 transform -translate-x-1/2 w-full'>
+        <div className='flex flex-col w-full mt-2'>
           <span className='text-sm text-center'>Use "Name" in Task Manager "Details" tab</span>
           <span className='text-sm text-center'>Eg: discord.exe, msedge.exe, code.exe</span>
         </div>
