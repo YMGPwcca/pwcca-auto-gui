@@ -12,8 +12,8 @@ pub enum Events {
   Exit,
 }
 
-impl Into<String> for Events {
-  fn into(self) -> String {
-    format!("{:?}", self)
+impl From<Events> for String {
+  fn from(val: Events) -> Self {
+    format!("{:?}", val)
   }
 }

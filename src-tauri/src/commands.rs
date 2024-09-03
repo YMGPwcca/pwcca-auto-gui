@@ -30,9 +30,8 @@ pub fn turn_off_screen() {
 #[tauri::command]
 pub fn get_run_with_windows() -> bool {
   let task_scheduler = TaskScheduler::new().expect("Cannot construct task scheduler");
-  let service_created = task_scheduler.is_service_created("PwccaAutoGUI");
 
-  service_created
+  task_scheduler.is_service_created("PwccaAutoGUI")
 }
 
 #[tauri::command]

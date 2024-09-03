@@ -23,13 +23,13 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
       {/* INIT FRAME */}
       <div className='m-auto bg-tier0 py-4 w-[350px] h-[750px] pc:border-2 pc:rounded-xl pc:border-tier3 mobile:w-full mobile:h-full'>
 
-        <div className='flex flex-col m-auto'>
+        <div className='flex flex-col m-auto w-full h-full'>
           <div className='flex flex-row text-center mx-auto relative w-full'>
             <SVGBackArrow className='w-6 h-6 absolute left-1 top-1/2 -translate-y-1/2 cursor-pointer' onClick={() => navigate(-1)} />
             <div className='font-bold text-2xl text-tier9 text-center m-auto'>{location.pathname.split('/')[2]}</div>
           </div>
 
-          <div className='m-auto mt-2 flex flex-col'>
+          <div className='m-auto mt-2 flex flex-col w-full h-full'>
             {children}
           </div>
         </div>
