@@ -1,13 +1,19 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SVGPlus from '../../components/svg/SVGPlus'
 import SettingLayout from './layout'
 import SVGTrash from '../../components/svg/SVGTrash'
 
 export default function Microphone() {
-  const [list, setList] = useState([...Array(30).keys()].map(i => (i + 1).toString()))
+  const [list, setList] = useState([] as string[])
 
   const inputRef = useRef<HTMLInputElement>(null)
   const itemRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    /* GET DATA FROM THE CONFIG LIST */
+
+
+  }, [])
 
   const addList = () => {
     if (inputRef.current!.value === '') return
@@ -29,7 +35,7 @@ export default function Microphone() {
     <SettingLayout>
       <span className='mx-auto font-bold text-xl'>Program List</span>
 
-      <div className='h-full w-full gap-3 flex flex-col relative'>
+      <div className='h-full w-full gap-3 flex flex-col relative mt-0.5'>
         {/* Application list */}
         <div className='flex flex-col bg-tier2 w-72 h-px500 mx-auto rounded-lg'>
           <div className='inline-flex flex-col w-full h-full overflow-auto align-top'>

@@ -5,29 +5,38 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct PowerConfig {
+  pub timer: u32,
+  pub percentage: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
+pub struct MicrophoneConfig {
+  pub enabled: bool,
+  pub list: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
 pub struct Config {
   pub startup: bool,
 
-  pub discord: bool,
+  pub microphone: MicrophoneConfig,
   pub ethernet: bool,
   pub taskbar: bool,
-  pub power: Power,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub struct Power {
-  pub timer: u32,
-  pub percentage: u32,
+  pub power: PowerConfig,
 }
 
 impl Config {
   pub const fn new() -> Self {
     Config {
       startup: false,
-      discord: false,
+      microphone: MicrophoneConfig {
+        enabled: false,
+        list: Vec::new(),
+      },
       ethernet: false,
       taskbar: false,
-      power: Power {
+      power: PowerConfig {
         timer: 300,
         percentage: 60,
       },
@@ -44,8 +53,11 @@ impl Config {
     self.startup = !self.startup;
   }
 
-  pub fn toggle_discord(&mut self) {
-    self.discord = !self.discord;
+  pub fn toggle_microphone(&mut self) {
+    self.microphone = MicrophoneConfig {
+      enabled: !self.microphone.enabled,
+      list: self.microphone.list.clone(),
+    };
   }
 
   pub fn toggle_ethernet(&mut self) {
@@ -57,12 +69,12 @@ impl Config {
   }
 
   pub fn set_power(&mut self, timer: u32, percentage: u32) {
-    self.power = Power { timer, percentage };
+    self.power = PowerConfig { timer, percentage };
   }
 
   pub fn write(&self) -> Result<Self> {
     std::fs::write(Config::get_path()?, self.stringify()?)?;
-    Ok(*self)
+    Ok(self.clone())
   }
 
   pub fn read() -> Result<Self> {

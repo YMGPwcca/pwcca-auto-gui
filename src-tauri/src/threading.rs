@@ -25,7 +25,7 @@ pub fn media_thread() -> Result<(), AudioDeviceError> {
   let discord_executable = String::from("Discord.exe");
 
   loop {
-    if unsafe { CONFIG.discord } {
+    if unsafe { CONFIG.microphone.enabled } {
       let all_outputs = enumerate_audio_devices(&DeviceType::Output)?;
 
       if all_outputs.len() > 1 {

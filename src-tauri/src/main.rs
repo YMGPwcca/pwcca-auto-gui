@@ -5,25 +5,15 @@ mod commands;
 mod config;
 mod mods;
 mod threading;
-mod types;
 
 use std::{process::exit, thread};
 
 use config::Config;
-use mods::{
-  display::{get_all_frequencies, get_current_frequency, set_new_frequency, turn_off_monitor},
-  process::get_processes_by_name,
-  startup::task_scheduler::TaskScheduler,
-  taskbar::get_taskbar_size,
-};
+use mods::{process::get_processes_by_name, startup::task_scheduler::TaskScheduler, taskbar::get_taskbar_size};
 use threading::*;
-use types::Events;
 
 use anyhow::Result;
-use tauri::{
-  CustomMenuItem, Manager, PhysicalPosition, PhysicalSize, SystemTray, SystemTrayEvent, SystemTrayMenu,
-  SystemTrayMenuItem,
-};
+use tauri::{Manager, PhysicalPosition, PhysicalSize, SystemTray, SystemTrayEvent};
 use windows::{
   core::w,
   Win32::{
@@ -33,32 +23,6 @@ use windows::{
 };
 
 pub static mut CONFIG: Config = Config::new();
-
-pub fn build_tray_menu() -> SystemTrayMenu {
-  let mut startup_item = CustomMenuItem::new(Events::Startup, "Run with Windows");
-  startup_item.selected = unsafe { CONFIG.startup };
-  let mut discord_item = CustomMenuItem::new(Events::Discord, "Discord");
-  discord_item.selected = unsafe { CONFIG.discord };
-  let mut ethernet_item = CustomMenuItem::new(Events::Ethernet, "Ethernet");
-  ethernet_item.selected = unsafe { CONFIG.ethernet };
-  let mut taskbar_item = CustomMenuItem::new(Events::Taskbar, "Taskbar");
-  taskbar_item.selected = unsafe { CONFIG.taskbar };
-
-  SystemTrayMenu::new()
-    .add_item(startup_item)
-    .add_native_item(SystemTrayMenuItem::Separator)
-    .add_item(discord_item)
-    .add_item(ethernet_item)
-    .add_item(taskbar_item)
-    .add_native_item(SystemTrayMenuItem::Separator)
-    .add_item(CustomMenuItem::new(Events::TurnOffMonitor, "Turn off monitor"))
-    .add_item(CustomMenuItem::new(
-      Events::RefreshRate,
-      format!("Refresh Rate: {} Hz", get_current_frequency()),
-    ))
-    .add_native_item(SystemTrayMenuItem::Separator)
-    .add_item(CustomMenuItem::new(Events::Exit, "Quit"))
-}
 
 fn main() -> Result<()> {
   // Check if another instance is running
@@ -120,86 +84,27 @@ fn main() -> Result<()> {
 
       Ok(())
     })
-    .system_tray(
-      SystemTray::new()
-        .with_tooltip("Pwcca Auto GUI")
-        .with_menu(build_tray_menu()),
-    )
+    .system_tray(SystemTray::new().with_tooltip("Pwcca Auto GUI"))
     .on_system_tray_event(|app, event| {
       let window = app.get_window("main").unwrap();
-      let tray_handle = app.tray_handle();
 
-      match event {
-        SystemTrayEvent::LeftClick { .. } => {
-          if window.is_visible().unwrap() {
-            window.hide().unwrap();
-          } else {
-            let app_size = window.outer_size().expect("Cannot get app size");
-            let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
-            let monitor_size = monitor.size();
+      if let SystemTrayEvent::LeftClick { .. } = event {
+        if window.is_visible().unwrap() {
+          window.hide().unwrap();
+        } else {
+          let app_size = window.outer_size().expect("Cannot get app size");
+          let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
+          let monitor_size = monitor.size();
 
-            window
-              .set_position(PhysicalPosition::new(
-                monitor_size.width - (app_size.width + 20),
-                (monitor_size.height - get_taskbar_size().height) - (app_size.height + 20),
-              ))
-              .expect("Cannot set window position");
-            window.show().expect("Cannot show window");
-            window.set_focus().expect("Cannot focus window");
-          }
+          window
+            .set_position(PhysicalPosition::new(
+              monitor_size.width - (app_size.width + 20),
+              (monitor_size.height - get_taskbar_size().height) - (app_size.height + 20),
+            ))
+            .expect("Cannot set window position");
+          window.show().expect("Cannot show window");
+          window.set_focus().expect("Cannot focus window");
         }
-        SystemTrayEvent::MenuItemClick { id, .. } => {
-          let item = tray_handle.get_item(&id);
-
-          match id.as_str() {
-            "Startup" => {
-              let task_scheduler = TaskScheduler::new().expect("Cannot construct task scheduler");
-              unsafe { CONFIG.toggle_startup() };
-
-              if unsafe { CONFIG.startup } {
-                let _ = task_scheduler.create_startup_task("PwccaAutoGUI");
-              } else {
-                let _ = task_scheduler.delete_startup_task("PwccaAutoGUI");
-              }
-
-              item.set_selected(unsafe { CONFIG.startup }).unwrap();
-              unsafe { CONFIG.write().expect("Cannot write config") };
-            }
-            "Discord" => {
-              unsafe { CONFIG.toggle_discord() };
-
-              item.set_selected(unsafe { CONFIG.discord }).unwrap();
-              unsafe { CONFIG.write().expect("Cannot write config") };
-            }
-            "Ethernet" => {
-              unsafe { CONFIG.toggle_ethernet() };
-
-              item.set_selected(unsafe { CONFIG.ethernet }).unwrap();
-              unsafe { CONFIG.write().expect("Cannot write config") };
-            }
-            "Taskbar" => {
-              unsafe { CONFIG.toggle_taskbar() };
-
-              item.set_selected(unsafe { CONFIG.taskbar }).unwrap();
-              unsafe { CONFIG.write().expect("Cannot write config") };
-            }
-            "TurnOffMonitor" => turn_off_monitor(),
-            "RefreshRate" => {
-              let refresh_rate = get_current_frequency();
-              let max_refresh_rate = get_all_frequencies().last().copied().unwrap();
-              set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 });
-
-              item
-                .set_title(format!("Refresh Rate: {} Hz", get_current_frequency()))
-                .unwrap();
-            }
-            "Exit" => app.exit(0),
-            _ => {}
-          };
-
-          window.eval("window.location.reload();").expect("Cannot reload window");
-        }
-        _ => {}
       };
     })
     .on_window_event(|event| match event.event() {

@@ -1,5 +1,4 @@
 use crate::{
-  build_tray_menu,
   mods::{
     display::{get_all_frequencies, get_current_frequency, set_new_frequency, turn_off_monitor},
     startup::task_scheduler::TaskScheduler,
@@ -7,19 +6,16 @@ use crate::{
   CONFIG,
 };
 
-use tauri::AppHandle;
-
 #[tauri::command]
 pub fn get_refresh_rate() -> bool {
   get_current_frequency() != 60
 }
 
 #[tauri::command]
-pub fn set_refresh_rate(app: AppHandle) {
+pub fn set_refresh_rate() {
   let refresh_rate = get_current_frequency();
   let max_refresh_rate = get_all_frequencies().last().copied().unwrap();
   set_new_frequency(if refresh_rate == 60 { max_refresh_rate } else { 60 });
-  let _ = app.tray_handle().set_menu(build_tray_menu());
 }
 
 #[tauri::command]
@@ -35,7 +31,7 @@ pub fn get_run_with_windows() -> bool {
 }
 
 #[tauri::command]
-pub fn set_run_with_windows(app: AppHandle) {
+pub fn set_run_with_windows() {
   let task_scheduler = TaskScheduler::new().expect("Cannot construct task scheduler");
   let service_created = task_scheduler.is_service_created("PwccaAutoGUI");
   if !service_created {
@@ -48,7 +44,6 @@ pub fn set_run_with_windows(app: AppHandle) {
     CONFIG.toggle_startup();
     CONFIG.write().expect("Cannot write config");
   }
-  let _ = app.tray_handle().set_menu(build_tray_menu());
 }
 
 #[tauri::command]
@@ -57,12 +52,11 @@ pub fn get_ethernet_state() -> bool {
 }
 
 #[tauri::command]
-pub fn set_ethernet_state(app: AppHandle) {
+pub fn set_ethernet_state() {
   unsafe {
     CONFIG.toggle_ethernet();
     CONFIG.write().expect("Cannot write config");
   }
-  let _ = app.tray_handle().set_menu(build_tray_menu());
 }
 
 #[tauri::command]
@@ -71,10 +65,9 @@ pub fn get_taskbar_state() -> bool {
 }
 
 #[tauri::command]
-pub fn set_taskbar_state(app: AppHandle) {
+pub fn set_taskbar_state() {
   unsafe {
     CONFIG.toggle_taskbar();
     CONFIG.write().expect("Cannot write config");
   }
-  let _ = app.tray_handle().set_menu(build_tray_menu());
 }
