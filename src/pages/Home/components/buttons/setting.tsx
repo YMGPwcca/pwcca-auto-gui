@@ -12,12 +12,22 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
   const [num, setNum] = useState(0)
   const [scale, setScale] = useState(1)
 
-  function getToggleData() {
-    invoke(get).then(state => setState(state as boolean))
-    setState(!Math.round(Math.random()))
+  async function getToggleData() {
+    try {
+      let got = await invoke(get)
+      if (typeof got === 'object') {
+        console.log(got)
+        setState((got as any).enabled)
+      } else {
+        setState(got as boolean)
+      }
+    }
+    catch {
+      setState(!Math.round(Math.random()))
+    }
   }
 
-  useEffect(() => getToggleData(), [])
+  useEffect(() => { getToggleData() }, [])
   useEffect(() => {
     if (num === 150) {
       setScale(30)

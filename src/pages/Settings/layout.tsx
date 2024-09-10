@@ -15,7 +15,7 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
   }, [])
 
   return (
-    <div className='pc:rounded-xl flex flex-col bg-tier0 h-dvh min-h-dvh w-dvw text-tier0 overflow-auto'>
+    <div className='pc:rounded-xl flex flex-col bg-tier0 h-dvh min-h-dvh w-dvw text-tier0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none]'>
 
       {/* ANIMATION FRAME */}
       <div ref={ref} className='absolute bg-tier2 h-dvh w-dvw top-0 left-0 pc:rounded-xl animate-fade-out z-50'></div>
@@ -26,7 +26,7 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
         <div className='flex flex-col m-auto w-full h-full'>
           <div className='flex flex-row text-center mx-auto relative w-full'>
             <SVGBackArrow className='w-6 h-6 absolute left-1 top-1/2 -translate-y-1/2 cursor-pointer' onClick={() => navigate(-1)} />
-            <div className='font-bold text-2xl text-tier0 text-center m-auto'>{location.pathname.split('/')[2]} Settings</div>
+            <div className='font-bold text-2xl text-tier0 text-center m-auto'>{location.pathname.split('/')[2]}</div>
           </div>
 
           <div className='m-auto mt-5 flex flex-col w-full h-full'>

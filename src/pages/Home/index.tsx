@@ -1,8 +1,20 @@
 import TogglesFrameCard from './components/cards/togglesCard'
 import SettingsFrameCard from './components/cards/settingsCard'
+import { useEffect } from 'react'
+
+import { Config, useConfigStore } from '../../data/config'
+import { invoke } from '@tauri-apps/api'
 
 export default function Home() {
+  const configStore = useConfigStore()
+
   document.addEventListener('contextmenu', event => event.preventDefault())
+
+  useEffect(() => {
+    invoke('get_config').then(config => configStore.setConfig(config as Config))
+  }, [])
+
+  useEffect(() => console.log(configStore.config), [configStore.config])
 
   return (
     <div className='pc:rounded-xl flex flex-col bg-tier0 h-dvh w-dvw text-tier0 overflow-hidden [scrollbar-width:none] [-ms-overflow-style:none]'>

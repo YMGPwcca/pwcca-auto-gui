@@ -92,6 +92,7 @@ fn main() -> Result<()> {
         if window.is_visible().unwrap() {
           window.hide().unwrap();
         } else {
+          window.eval("window.location.reload();").expect("Cannot reload window");
           let app_size = window.outer_size().expect("Cannot get app size");
           let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
           let monitor_size = monitor.size();
@@ -130,7 +131,9 @@ fn main() -> Result<()> {
       commands::get_ethernet_state,
       commands::set_ethernet_state,
       commands::get_taskbar_state,
-      commands::set_taskbar_state
+      commands::set_taskbar_state,
+      commands::get_microphone_state,
+      commands::get_config,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

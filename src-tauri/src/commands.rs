@@ -1,4 +1,5 @@
 use crate::{
+  config::{Config, MicrophoneConfig},
   mods::{
     display::{get_all_frequencies, get_current_frequency, set_new_frequency, turn_off_monitor},
     startup::task_scheduler::TaskScheduler,
@@ -61,7 +62,7 @@ pub fn set_ethernet_state() {
 
 #[tauri::command]
 pub fn get_taskbar_state() -> bool {
-  unsafe { CONFIG.taskbar }
+  unsafe { CONFIG.taskbar.enabled }
 }
 
 #[tauri::command]
@@ -69,5 +70,18 @@ pub fn set_taskbar_state() {
   unsafe {
     CONFIG.toggle_taskbar();
     CONFIG.write().expect("Cannot write config");
+  }
+}
+
+#[tauri::command]
+pub fn get_microphone_state() -> MicrophoneConfig {
+  unsafe { CONFIG.microphone.clone() }
+}
+
+#[tauri::command]
+pub fn get_config() -> Config {
+  unsafe {
+    CONFIG = Config::read().expect("Cannot read config");
+    CONFIG.clone()
   }
 }

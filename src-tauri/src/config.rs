@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct PowerConfig {
+  pub enabled: bool,
   pub timer: u32,
   pub percentage: u32,
 }
@@ -13,7 +14,13 @@ pub struct PowerConfig {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
 pub struct MicrophoneConfig {
   pub enabled: bool,
-  pub list: Vec<String>,
+  pub include: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
+pub struct TaskbarConfig {
+  pub enabled: bool,
+  pub include: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
@@ -22,7 +29,7 @@ pub struct Config {
 
   pub microphone: MicrophoneConfig,
   pub ethernet: bool,
-  pub taskbar: bool,
+  pub taskbar: TaskbarConfig,
   pub power: PowerConfig,
 }
 
@@ -32,11 +39,15 @@ impl Config {
       startup: false,
       microphone: MicrophoneConfig {
         enabled: false,
-        list: Vec::new(),
+        include: Vec::new(),
       },
       ethernet: false,
-      taskbar: false,
+      taskbar: TaskbarConfig {
+        enabled: false,
+        include: Vec::new(),
+      },
       power: PowerConfig {
+        enabled: false,
         timer: 300,
         percentage: 60,
       },
@@ -56,7 +67,7 @@ impl Config {
   pub fn toggle_microphone(&mut self) {
     self.microphone = MicrophoneConfig {
       enabled: !self.microphone.enabled,
-      list: self.microphone.list.clone(),
+      include: self.microphone.include.clone(),
     };
   }
 
@@ -65,11 +76,26 @@ impl Config {
   }
 
   pub fn toggle_taskbar(&mut self) {
-    self.taskbar = !self.taskbar;
+    self.taskbar = TaskbarConfig {
+      enabled: !self.taskbar.enabled,
+      include: self.taskbar.include.clone(),
+    };
+  }
+
+  pub fn toggle_power(&mut self) {
+    self.power = PowerConfig {
+      enabled: !self.power.enabled,
+      timer: self.power.timer,
+      percentage: self.power.percentage,
+    };
   }
 
   pub fn set_power(&mut self, timer: u32, percentage: u32) {
-    self.power = PowerConfig { timer, percentage };
+    self.power = PowerConfig {
+      enabled: self.power.enabled,
+      timer,
+      percentage,
+    };
   }
 
   pub fn write(&self) -> Result<Self> {
@@ -82,7 +108,9 @@ impl Config {
     if path.exists() {
       Ok(serde_json::from_str(&std::fs::read_to_string(path)?)?)
     } else {
-      Ok(Config::new())
+      let config = Config::new();
+      config.write()?;
+      Ok(config)
     }
   }
 
