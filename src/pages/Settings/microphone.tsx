@@ -17,11 +17,15 @@ export default function Microphone() {
 
   }, [])
 
-  const addList = () => {
-    if (inputApp === '') return
-    if (list.includes(inputApp)) return
+  const modifyList = () => {
+    if (inputApp === '') {
+      setList([])
+    }
+    else {
+      if (list.includes(inputApp)) return
 
-    setList([...list, inputApp])
+      setList([...list, inputApp])
+    }
   }
 
   const inputClick = () => {
@@ -30,7 +34,7 @@ export default function Microphone() {
 
   const inputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     inputRef.current?.scrollIntoView({ behavior: 'instant' })
-    if (e.key === 'Enter') addList()
+    if (e.key === 'Enter') modifyList()
   }
 
   const toggleButton = async () => {
@@ -82,15 +86,17 @@ export default function Microphone() {
           </div>
           <div
             className='group relative cursor-pointer bg-tier2 rounded-lg h-full w-[54px] flex mx-auto'
-            onClick={addList}
+            onClick={modifyList}
           >
             <div className='m-auto flex'>
-              <div className='group-hover:flex hidden w-16 h-10 absolute -top-8 left-1/2 -translate-x-1/2 bg-tier3 rounded-lg text-center'>
-                <span className='m-auto'>{
-                  inputApp.length > 0
-                    ? 'Add'
-                    : 'Clear all'
-                }</span>
+              <div className='group-hover:flex hidden w-20 h-9 absolute -top-10 left-1/2 -translate-x-1/2 bg-tier3 rounded-lg text-center'>
+                <span className='m-auto'>
+                  {
+                    inputApp.length > 0
+                      ? 'Add'
+                      : 'Clear all'
+                  }
+                </span>
               </div>
               {
                 inputApp.length > 0
