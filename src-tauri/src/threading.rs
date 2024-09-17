@@ -22,10 +22,11 @@ pub fn media_thread() -> Result<(), AudioDeviceError> {
   init()?;
 
   let mut connected = false;
-  let discord_executable = String::from("Discord.exe");
 
   loop {
     if unsafe { CONFIG.microphone.enabled } {
+      let config_includes = unsafe { &CONFIG.microphone.include };
+
       let all_outputs = enumerate_audio_devices(&DeviceType::Output)?;
 
       if all_outputs.len() > 1 {
@@ -33,7 +34,7 @@ pub fn media_thread() -> Result<(), AudioDeviceError> {
 
         let programs = get_active_audio_applications(&DeviceType::Input)?;
 
-        if programs.contains(&discord_executable) {
+        if config_includes.iter().any(|e| programs.contains(e)) {
           connected = true;
 
           if current_output.device_type == "Speakers" {
