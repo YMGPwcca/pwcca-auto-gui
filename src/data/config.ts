@@ -1,18 +1,19 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export interface Config {
   startup: boolean
 
   microphone: {
     enabled: boolean
-    includeApps: string[]
+    include: string[]
   }
 
   ethernet: boolean
 
   taskbar: {
     enabled: boolean
-    includeApps: string[]
+    include: string[]
   }
 
   power: {
@@ -28,25 +29,34 @@ interface ConfigStore {
 }
 
 export const useConfigStore = create<ConfigStore>()(
-  set => ({
-    config: {
-      startup: false,
-      microphone: {
-        enabled: false,
-        includeApps: [],
+  persist(
+    set => ({
+      config: {
+        startup: false,
+        microphone: {
+          enabled: false,
+          include: [],
+        },
+        ethernet: false,
+        taskbar: {
+          enabled: false,
+          include: [],
+        },
+        power: {
+          enabled: false,
+          timer: 300,
+          percentage: 60,
+        },
       },
-      ethernet: false,
-      taskbar: {
-        enabled: false,
-        includeApps: [],
-      },
-      power: {
-        enabled: false,
-        timer: 300,
-        percentage: 60,
-      },
-    },
 
-    setConfig: config => set({ config })
-  }),
+      setConfig: config => {
+        console.log(config)
+        set({ config })
+      }
+    }),
+    {
+      name: 'config',
+
+    }
+  )
 )

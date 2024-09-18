@@ -9,12 +9,13 @@ import Microphone from './pages/Settings/microphone'
 import AutoStart from './pages/Settings/autostart'
 import Battery from './pages/Settings/battery'
 import Taskbar from './pages/Settings/taskbar'
+import Root from './pages/root'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 
 root.render(
   <BrowserRouter>
-    <div className='mobile:bg-tier0 [scrollbar-width:none] [-ms-overflow-style:none] select-none [-webkit-touch-callout:none] [-webkit-user-select:none] [-khtml-user-select:none] [-moz-user-select:none] [-ms-user-select:none] [-webkit-tap-highlight-color:transparent]'>
+    <Root>
       <Routes>
         <Route path='/' element={<Home />} />
 
@@ -25,6 +26,6 @@ root.render(
 
         <Route path='*' element={<>404 FUCK</>} />
       </Routes>
-    </div>
+    </Root>
   </BrowserRouter>
 )
