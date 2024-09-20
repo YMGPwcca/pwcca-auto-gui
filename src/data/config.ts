@@ -1,62 +1,85 @@
+import { invoke } from '@tauri-apps/api'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 export interface Config {
-  startup: boolean
 
+  // Toggles
+  startup: boolean,
+  ethernet: boolean,
+
+  // Configs
   microphone: {
-    enabled: boolean
-    include: string[]
-  }
-
-  ethernet: boolean
-
-  taskbar: {
-    enabled: boolean
-    include: string[]
-  }
-
+    enabled: boolean,
+    apps: string[]
+  },
   power: {
-    enabled: boolean
-    timer: number
+    enabled: boolean,
+    timer: number,
     percentage: number
-  }
+  },
+  autostart: {
+    enabled: boolean,
+    apps: string[]
+  },
+  taskbar: {
+    enabled: boolean,
+    apps: string[]
+  },
+
+  [T: string]: any
 }
 
 interface ConfigStore {
   config: Config
-  setConfig: (config: Config) => void
+  setConfig: (config: Config) => void,
+  loadConfig: () => Promise<void>,
+  saveConfig: () => Promise<void>,
 }
 
 export const useConfigStore = create<ConfigStore>()(
   persist(
-    set => ({
+    (set, get) => ({
       config: {
+        // Toggles
         startup: false,
+        ethernet: false,
+
+        // Configs
         microphone: {
           enabled: false,
-          include: [],
-        },
-        ethernet: false,
-        taskbar: {
-          enabled: false,
-          include: [],
+          apps: [],
         },
         power: {
           enabled: false,
           timer: 300,
           percentage: 60,
         },
+        autostart: {
+          enabled: false,
+          apps: [],
+        },
+        taskbar: {
+          enabled: false,
+          apps: [],
+        },
       },
 
       setConfig: config => {
-        console.log(config)
         set({ config })
-      }
+      },
+
+      loadConfig: async () => {
+        set({ config: await invoke('get_config') })
+      },
+
+      saveConfig: async () => {
+        await invoke('save_config', { config: JSON.stringify(get().config) })
+      },
+
     }),
     {
       name: 'config',
-
     }
   )
 )

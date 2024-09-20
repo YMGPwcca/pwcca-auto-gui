@@ -1,5 +1,5 @@
 use crate::{
-  config::{Config, MicrophoneConfig},
+  config::Config,
   mods::{
     display::{get_all_frequencies, get_current_frequency, set_new_frequency, turn_off_monitor},
     startup::task_scheduler::TaskScheduler,
@@ -48,12 +48,7 @@ pub fn set_run_with_windows() {
 }
 
 #[tauri::command]
-pub fn get_ethernet_state() -> bool {
-  unsafe { CONFIG.ethernet }
-}
-
-#[tauri::command]
-pub fn set_ethernet_state() {
+pub fn toggle_ethernet() {
   unsafe {
     CONFIG.toggle_ethernet();
     CONFIG.write().expect("Cannot write config");
@@ -61,12 +56,31 @@ pub fn set_ethernet_state() {
 }
 
 #[tauri::command]
-pub fn get_taskbar_state() -> bool {
-  unsafe { CONFIG.taskbar.enabled }
+pub fn toggle_microphone() {
+  unsafe {
+    CONFIG.toggle_microphone();
+    CONFIG.write().expect("Cannot write config");
+  }
 }
 
 #[tauri::command]
-pub fn set_taskbar_state() {
+pub fn toggle_power() {
+  unsafe {
+    CONFIG.toggle_power();
+    CONFIG.write().expect("Cannot write config");
+  }
+}
+
+#[tauri::command]
+pub fn toggle_autostart() {
+  unsafe {
+    CONFIG.toggle_autostart();
+    CONFIG.write().expect("Cannot write config");
+  }
+}
+
+#[tauri::command]
+pub fn toggle_taskbar() {
   unsafe {
     CONFIG.toggle_taskbar();
     CONFIG.write().expect("Cannot write config");
@@ -74,14 +88,17 @@ pub fn set_taskbar_state() {
 }
 
 #[tauri::command]
-pub fn get_microphone_state() -> MicrophoneConfig {
-  unsafe { CONFIG.microphone.clone() }
-}
-
-#[tauri::command]
 pub fn get_config() -> Config {
   unsafe {
     CONFIG = Config::read().expect("Cannot read config");
     CONFIG.clone()
+  }
+}
+
+#[tauri::command]
+pub fn save_config(config: String) {
+  unsafe {
+    CONFIG = Config::parse(config);
+    CONFIG.write().expect("Cannot write config");
   }
 }

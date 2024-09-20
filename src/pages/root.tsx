@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 
-import { Config, useConfigStore } from '../data/config'
-import { invoke } from '@tauri-apps/api'
+import { useConfigStore } from '../data/config'
 
 export default function Root({ children }: React.PropsWithChildren) {
   const configStore = useConfigStore()
@@ -9,7 +8,7 @@ export default function Root({ children }: React.PropsWithChildren) {
   document.addEventListener('contextmenu', event => event.preventDefault())
 
   useEffect(() => {
-    invoke('get_config').then(config => configStore.setConfig(config as Config))
+    configStore.loadConfig()
   }, [])
 
   return (

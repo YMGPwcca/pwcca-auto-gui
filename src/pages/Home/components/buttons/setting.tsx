@@ -35,7 +35,7 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
       for (const item of ref.current?.children!)
         item.classList.add('hidden')
 
-      setTimeout(() => navigate('/setting/' + name), 550 /* animation length - (30scale + 10ms) */)
+      setTimeout(() => navigate('/setting/' + name, { state: 1 }), 550 /* animation length - (30scale + 10ms) */)
     }
   }, [num])
 

@@ -7,7 +7,7 @@ import Home from './pages/Home'
 
 import Microphone from './pages/Settings/microphone'
 import AutoStart from './pages/Settings/autostart'
-import Battery from './pages/Settings/battery'
+import Power from './pages/Settings/battery'
 import Taskbar from './pages/Settings/taskbar'
 import Root from './pages/root'
 
@@ -21,7 +21,7 @@ root.render(
 
         <Route path='/setting/Microphone' element={<Microphone />} />
         <Route path='/setting/AutoStart' element={<AutoStart />} />
-        <Route path='/setting/Battery' element={<Battery />} />
+        <Route path='/setting/Power' element={<Power />} />
         <Route path='/setting/Taskbar' element={<Taskbar />} />
 
         <Route path='*' element={<>404 FUCK</>} />
