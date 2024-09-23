@@ -2,7 +2,11 @@ import { invoke } from '@tauri-apps/api/tauri'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { useSettingAnimationStore } from '../../../../data/settingAnimation'
+
 export default function SettingButton({ name, get, set }: { name: string, get: string, set: string }) {
+  const settingAnimationStore = useSettingAnimationStore()
+
   const navigate = useNavigate()
 
   const ref = useRef<HTMLDivElement>(null)
@@ -14,13 +18,8 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
 
   async function getToggleData() {
     try {
-      let got = await invoke(get)
-      if (typeof got === 'object') {
-        console.log(got)
-        setState((got as any).enabled)
-      } else {
-        setState(got as boolean)
-      }
+      let got: Record<string, any> = await invoke(get)
+      setState(got.enabled)
     }
     catch {
       setState(!Math.round(Math.random()))
@@ -35,7 +34,10 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
       for (const item of ref.current?.children!)
         item.classList.add('hidden')
 
-      setTimeout(() => navigate('/setting/' + name, { state: 1 }), 550 /* animation length - (30scale + 10ms) */)
+      setTimeout(() => {
+        settingAnimationStore.setState(true)
+        navigate('/setting/' + name)
+      }, 550 /* animation length - (30scale + 10ms) */)
     }
   }, [num])
 

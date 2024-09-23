@@ -4,9 +4,11 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import SVGBackArrow from '../../components/svg/SVGBackArrow'
 import { useConfigStore } from '../../data/config'
 import { invoke } from '@tauri-apps/api'
+import { useSettingAnimationStore } from '../../data/settingAnimation'
 
 export default function SettingLayout({ children }: React.PropsWithChildren) {
   const configStore = useConfigStore()
+  const settingAnimationStore = useSettingAnimationStore()
 
   const navigate = useNavigate()
   const location = useLocation()
@@ -18,7 +20,10 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setTimeout(() => ref.current?.classList.add('hidden'), 290 /* animation length - 10ms */)
+    setTimeout(() => {
+      ref.current?.classList.add('hidden')
+      settingAnimationStore.setState(false)
+    }, 290 /* animation length - 10ms */)
   }, [])
 
   const toggleButton = async () => {
@@ -28,17 +33,10 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
   }
 
   return (
-    <div className='pc:rounded-xl flex flex-col bg-tier0 h-dvh min-h-dvh w-dvw text-tier0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none]'>
+    <div className='pc:rounded-xl flex flex-col bg-tier0 h-dvh min-h-dvh w-dvw text-tier0 overflow-auto [scrollbar-width:none] [-ms-overflow-style:none] relative'>
 
       {/* ANIMATION FRAME */}
-      {
-        location.state === 1
-          ? (() => {
-            location.state = 0
-            return <div ref={ref} className='absolute bg-tier2 h-dvh w-dvw top-0 left-0 pc:rounded-xl animate-fade-out z-50'></div>
-          })()
-          : null
-      }
+      <div ref={ref} className={`${!settingAnimationStore.state ? 'hidden' : 'block'} absolute bg-tier2 h-dvh w-dvw top-0 left-0 pc:rounded-xl animate-fade-out z-50`}></div>
 
       {/* INIT FRAME */}
       <div className='m-auto bg-tier0 py-4 w-[350px] h-[750px] pc:border-2 pc:rounded-xl pc:border-tier3 mobile:w-full mobile:h-full'>
