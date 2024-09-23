@@ -128,11 +128,6 @@ fn main() -> Result<()> {
       commands::turn_off_screen,
       commands::get_run_with_windows,
       commands::set_run_with_windows,
-      commands::toggle_ethernet,
-      commands::toggle_microphone,
-      commands::toggle_power,
-      commands::toggle_autostart,
-      commands::toggle_taskbar,
       commands::get_config,
       commands::save_config,
     ])

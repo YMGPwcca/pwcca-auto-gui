@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-import SVGBackArrow from '../../components/svg/SVGBackArrow'
 import { useConfigStore } from '../../data/config'
-import { invoke } from '@tauri-apps/api'
 import { useSettingAnimationStore } from '../../data/settingAnimation'
+
+import SVGBackArrow from '../../components/svg/SVGBackArrow'
 
 export default function SettingLayout({ children }: React.PropsWithChildren) {
   const configStore = useConfigStore()
@@ -28,8 +28,8 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
 
   const toggleButton = async () => {
     setEnabled(prev => !prev)
-    await invoke('toggle_' + title.toLowerCase())
-    await configStore.loadConfig()
+    configStore.config[title.toLowerCase()].enabled = !configStore.config[title.toLowerCase()].enabled
+    await configStore.saveConfig()
   }
 
   return (

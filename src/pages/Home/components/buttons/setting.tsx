@@ -1,10 +1,11 @@
-import { invoke } from '@tauri-apps/api/tauri'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useSettingAnimationStore } from '../../../../data/settingAnimation'
+import { useConfigStore } from '../../../../data/config'
 
-export default function SettingButton({ name, get, set }: { name: string, get: string, set: string }) {
+export default function SettingButton({ name }: { name: string }) {
+  const configStore = useConfigStore()
   const settingAnimationStore = useSettingAnimationStore()
 
   const navigate = useNavigate()
@@ -16,14 +17,7 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
   const [num, setNum] = useState(0)
   const [scale, setScale] = useState(1)
 
-  async function getToggleData() {
-    try {
-      setState((await invoke(get) as Record<string, any>).enabled)
-    }
-    catch {
-      setState(!Math.round(Math.random()))
-    }
-  }
+  const getToggleData = () => setState(configStore.config[name.toLowerCase()].enabled)
 
   useEffect(() => { getToggleData() }, [])
   useEffect(() => {
@@ -40,8 +34,9 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
     }
   }, [num])
 
-  async function onClick() {
-    await invoke(set)
+  const onClick = async () => {
+    configStore.config[name.toLowerCase()].enabled = !configStore.config[name.toLowerCase()].enabled
+    await configStore.saveConfig()
     getToggleData()
   }
 

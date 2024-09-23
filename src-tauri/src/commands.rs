@@ -48,46 +48,6 @@ pub fn set_run_with_windows() {
 }
 
 #[tauri::command]
-pub fn toggle_ethernet() {
-  unsafe {
-    CONFIG.toggle_ethernet();
-    CONFIG.write().expect("Cannot write config");
-  }
-}
-
-#[tauri::command]
-pub fn toggle_microphone() {
-  unsafe {
-    CONFIG.toggle_microphone();
-    CONFIG.write().expect("Cannot write config");
-  }
-}
-
-#[tauri::command]
-pub fn toggle_power() {
-  unsafe {
-    CONFIG.toggle_power();
-    CONFIG.write().expect("Cannot write config");
-  }
-}
-
-#[tauri::command]
-pub fn toggle_autostart() {
-  unsafe {
-    CONFIG.toggle_autostart();
-    CONFIG.write().expect("Cannot write config");
-  }
-}
-
-#[tauri::command]
-pub fn toggle_taskbar() {
-  unsafe {
-    CONFIG.toggle_taskbar();
-    CONFIG.write().expect("Cannot write config");
-  }
-}
-
-#[tauri::command]
 pub fn get_config() -> Config {
   unsafe {
     CONFIG = Config::read().expect("Cannot read config");

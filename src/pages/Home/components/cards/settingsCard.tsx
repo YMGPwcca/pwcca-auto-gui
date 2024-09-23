@@ -6,10 +6,10 @@ export default function SettingsFrameCard() {
   return (
     <FrameCard name={'Settings'}>
       <ItemCard>
-        <SettingButton name='Microphone' get='' set='' />
-        <SettingButton name='Power' get='' set='' />
-        <SettingButton name='AutoStart' get='' set='' />
-        <SettingButton name='Taskbar' get='' set='' />
+        <SettingButton name='Microphone' />
+        <SettingButton name='Power' />
+        <SettingButton name='AutoStart' />
+        <SettingButton name='Taskbar' />
       </ItemCard>
     </FrameCard>
   )
