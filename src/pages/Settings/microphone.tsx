@@ -106,7 +106,7 @@ export default function Microphone() {
       </div>
 
       {/* Notice */}
-      <div className='flex flex-col w-full mt-2'>
+      <div className='flex flex-col absolute bottom-0 left-1/2 -translate-x-1/2 w-full text-center mb-2'>
         <span className='text-sm text-center'>Use "Name" in Task Manager "Details" tab</span>
         <span className='text-sm text-center'>Eg: discord.exe, msedge.exe, code.exe</span>
       </div>
