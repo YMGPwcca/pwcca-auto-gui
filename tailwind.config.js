@@ -25,7 +25,15 @@ export default {
       },
 
       height: {
+        px10: '10px',
+        px20: '20px',
+        px30: '30px',
+        px40: '40px',
         px50: '50px',
+        px60: '60px',
+        px70: '70px',
+        px80: '80px',
+        px90: '90px',
         px100: '100px',
         px150: '150px',
         px200: '200px',

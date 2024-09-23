@@ -75,6 +75,7 @@ export const useConfigStore = create<ConfigStore>()(
 
       saveConfig: async () => {
         await invoke('save_config', { config: JSON.stringify(get().config) })
+        await get().loadConfig()
       },
 
     }),

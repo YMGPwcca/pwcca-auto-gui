@@ -18,8 +18,7 @@ export default function SettingButton({ name, get, set }: { name: string, get: s
 
   async function getToggleData() {
     try {
-      let got: Record<string, any> = await invoke(get)
-      setState(got.enabled)
+      setState((await invoke(get) as Record<string, any>).enabled)
     }
     catch {
       setState(!Math.round(Math.random()))
