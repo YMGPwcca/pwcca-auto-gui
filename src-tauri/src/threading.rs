@@ -7,6 +7,7 @@ use crate::mods::{
     types::{device::DeviceType, error::AudioDeviceError},
   },
   power::{get_active_power_scheme, get_all_power_schemes, get_power_status, set_active_power_scheme},
+  startup::registry::{get_all_startup_items, set_startup_item_state},
   taskbar::taskbar_automation,
 };
 
@@ -83,7 +84,7 @@ pub fn power_thread() -> Result<(), WIN32_ERROR> {
 
   let mut on_battery_secs = 0;
   let all_power_schemes = get_all_power_schemes()?;
-  let power = unsafe { CONFIG.power };
+  let power = unsafe { &CONFIG.power };
 
   let powersaver = all_power_schemes
     .iter()
@@ -92,7 +93,7 @@ pub fn power_thread() -> Result<(), WIN32_ERROR> {
   let ultra = all_power_schemes.iter().find(|scheme| scheme.name == "Ultra").unwrap();
 
   loop {
-    if unsafe { CONFIG.power.enabled } {
+    if power.enabled {
       let is_plugged_in = get_power_status().is_plugged_in;
 
       if power.timer != 0 && on_battery_secs > power.timer {
@@ -125,6 +126,29 @@ pub fn taskbar_thread() {
   loop {
     if unsafe { CONFIG.taskbar.enabled } {
       taskbar_automation();
+    }
+
+    std::thread::sleep(Duration::from_secs(1));
+  }
+}
+
+pub fn autostart_thread() {
+  // Initialize the autostart thread
+  println!("  + Running Autostart Thread");
+
+  loop {
+    if unsafe { CONFIG.autostart.enabled } {
+      let disallow: Vec<String> = unsafe { CONFIG.autostart.apps.clone() };
+
+      let is_plugged_in = get_power_status().is_plugged_in;
+      let startup_items = get_all_startup_items().expect("Cannot get all startup items");
+
+      for item in startup_items {
+        if disallow.contains(&item.name) {
+          set_startup_item_state(&item.name, is_plugged_in)
+            .unwrap_or_else(|_| panic!("Cannot disable {} startup", item.name));
+        }
+      }
     }
 
     std::thread::sleep(Duration::from_secs(1));

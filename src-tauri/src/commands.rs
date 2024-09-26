@@ -2,7 +2,10 @@ use crate::{
   config::Config,
   mods::{
     display::{get_all_frequencies, get_current_frequency, set_new_frequency, turn_off_monitor},
-    startup::task_scheduler::TaskScheduler,
+    startup::{
+      registry::{get_all_startup_items, types::startup_status::StartupState},
+      task_scheduler::TaskScheduler,
+    },
   },
   CONFIG,
 };
@@ -61,4 +64,14 @@ pub fn save_config(config: String) {
     CONFIG = Config::parse(config);
     CONFIG.write().expect("Cannot write config");
   }
+}
+
+#[tauri::command]
+pub fn get_autostart_apps() -> Vec<StartupState> {
+  get_all_startup_items().expect("Cannot get all startup items")
+}
+
+#[tauri::command]
+pub fn exit_app(app: tauri::AppHandle) {
+  app.exit(0)
 }

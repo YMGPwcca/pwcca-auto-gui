@@ -81,6 +81,9 @@ fn main() -> Result<()> {
       let _ = thread::Builder::new()
         .name("Taskbar_Thread".to_string())
         .spawn(taskbar_thread);
+      let _ = thread::Builder::new()
+        .name("Autostart_Thread".to_string())
+        .spawn(autostart_thread);
 
       Ok(())
     })
@@ -89,9 +92,9 @@ fn main() -> Result<()> {
       let window = app.get_window("main").unwrap();
 
       if let SystemTrayEvent::LeftClick { .. } = event {
-        if window.is_visible().unwrap() {
-          window.hide().unwrap();
-        } else {
+        let visible = window.is_visible().unwrap();
+
+        if !visible {
           window.eval("window.location.reload();").expect("Cannot reload window");
           let app_size = window.outer_size().expect("Cannot get app size");
           let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
@@ -105,6 +108,8 @@ fn main() -> Result<()> {
             .expect("Cannot set window position");
           window.show().expect("Cannot show window");
           window.set_focus().expect("Cannot focus window");
+        } else {
+          window.hide().unwrap();
         }
       };
     })
@@ -128,8 +133,10 @@ fn main() -> Result<()> {
       commands::turn_off_screen,
       commands::get_run_with_windows,
       commands::set_run_with_windows,
+      commands::get_autostart_apps,
       commands::get_config,
       commands::save_config,
+      commands::exit_app,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
