@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api'
+import { invoke } from '@/invokeTauri'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 

@@ -1,6 +1,6 @@
 import { useEffect, WheelEvent } from 'react'
 
-import { useConfigStore } from '../../../data/config'
+import { useConfigStore } from '@/data/config'
 
 export default function Power_Timer() {
   const configStore = useConfigStore()

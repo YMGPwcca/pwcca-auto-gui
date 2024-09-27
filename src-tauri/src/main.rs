@@ -68,6 +68,9 @@ fn main() -> Result<()> {
       window.set_always_on_top(true)?;
       window.set_skip_taskbar(true)?;
 
+      #[cfg(debug_assertions)]
+      window.open_devtools();
+
       // Threading
       let _ = thread::Builder::new()
         .name("Power_Thread".to_string())

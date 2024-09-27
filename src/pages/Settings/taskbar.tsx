@@ -1,4 +1,4 @@
-import SettingLayout from './layout'
+import SettingLayout from '@/pages/Settings/layout'
 
 export default function Taskbar() {
   return (

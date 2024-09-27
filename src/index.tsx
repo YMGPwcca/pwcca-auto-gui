@@ -3,13 +3,13 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import './index.css'
 
-import Home from './pages/Home'
+import Home from '@/pages/Home'
 
-import Microphone from './pages/Settings/microphone'
-import AutoStart from './pages/Settings/autostart'
-import Power from './pages/Settings/power'
-import Taskbar from './pages/Settings/taskbar'
-import Root from './pages/root'
+import Microphone from '@/pages/Settings/microphone'
+import AutoStart from '@/pages/Settings/autostart'
+import Power from '@/pages/Settings/power'
+import Taskbar from '@/pages/Settings/taskbar'
+import Root from '@/pages/root'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 

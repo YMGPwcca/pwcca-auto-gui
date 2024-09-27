@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { useSettingAnimationStore } from '../../../../data/settingAnimation'
-import { useConfigStore } from '../../../../data/config'
+import { useSettingAnimationStore } from '@/data/settingAnimation'
+import { useConfigStore } from '@/data/config'
 
 export default function SettingButton({ name }: { name: string }) {
   const configStore = useConfigStore()
@@ -97,7 +97,7 @@ export default function SettingButton({ name }: { name: string }) {
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerLeave}
     >
-      <span className='text-lg'>{num > 30 ? 'Navigating...' : name}</span>
+      <span className='text-lg font-medium'>{num > 30 ? 'Navigating...' : name}</span>
       <div
         style={{
           backgroundSize: `${num < 30 ? 0 : num - 30}% 100%`,

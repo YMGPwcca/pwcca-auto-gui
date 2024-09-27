@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { useConfigStore } from '../../data/config'
+import { useConfigStore } from '@/data/config'
 
-import SVGPlus from '../../components/svg/SVGPlus'
-import SettingLayout from './layout'
-import SVGTrash from '../../components/svg/SVGTrash'
-import SVGSad from '../../components/svg/SVGSad'
+import SVGPlus from '@/components/svg/SVGPlus'
+import SettingLayout from '@/pages/Settings/layout'
+import SVGTrash from '@/components/svg/SVGTrash'
+import SVGSad from '@/components/svg/SVGSad'
 
 export default function Microphone() {
   const configStore = useConfigStore()
@@ -46,14 +46,14 @@ export default function Microphone() {
       {/* Application list */}
       <span className='text-center text-xl font-bold mt-2'>Program list</span>
       <div className='flex flex-col bg-tier2 w-72 h-px400 mx-auto rounded-lg'>
-        <div className='inline-flex flex-col w-full h-full overflow-auto align-top'>
+        <div className='flex flex-col w-full h-full overflow-auto align-top'>
           {
             list.length > 0
               ? list.map(item => (
-                <div key={item} className='flex flex-row text-lg my-1 mx-2 border-b-tier4 [&:not(:last-child)]:border-b-2'>
+                <div key={item} className='flex flex-row text-lg my-1 mx-2 border-b-tier4 pb-2 [&:not(:last-child)]:border-b-2'>
                   <span className='mx-1 overflow-auto w-9/12' ref={itemRef}>{item}</span>
                   <div className='flex-grow'></div>
-                  <hr className='w-0.5 h-5 border-0 bg-tier4 my-auto mr-1'></hr>
+                  <hr className='w-0.5 h-5 border-0 bg-tier4 my-auto mr-2'></hr>
                   <SVGTrash className='mx-1 w-5 h-5 my-auto cursor-pointer' onClick={() => setList(list.filter(i => i !== item))} />
                 </div>
               ))

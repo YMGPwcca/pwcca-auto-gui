@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/tauri'
+import { invoke } from '@/invokeTauri'
 import { useEffect, useState } from 'react'
 
 export default function ToggleButton({ name, get, set }: { name: string, get: string, set: string }) {
@@ -24,7 +24,7 @@ export default function ToggleButton({ name, get, set }: { name: string, get: st
       onPointerLeave={() => setClicking(false)}
       onClick={onClick}
     >
-      <span className='text-lg'>{name}</span>
+      <span className='text-lg font-medium'>{name}</span>
       <div className={`${state ? 'bg-[#69E5FB]' : 'bg-[#FB6969]'} w-8 h-3 mt-2 rounded-lg mx-auto`}></div>
     </div>
   )

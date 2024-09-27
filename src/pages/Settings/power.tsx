@@ -1,8 +1,8 @@
-import { useConfigStore } from '../../data/config'
+import { useConfigStore } from '@/data/config'
 
-import SettingLayout from './layout'
-import Power_Timer from './Power/Timer'
-import Power_Percentage from './Power/Percentage'
+import SettingLayout from '@/pages/Settings/layout'
+import Power_Timer from '@/pages/Settings/Power/Timer'
+import Power_Percentage from '@/pages/Settings/Power/Percentage'
 
 export default function Power() {
   const configStore = useConfigStore()
@@ -41,8 +41,13 @@ export default function Power() {
 
       {/* Notice */}
       <div className='flex flex-col absolute bottom-0 left-1/2 -translate-x-1/2 w-full text-center mb-2'>
-        <span className='text-sm text-center'>This is an OR statement,</span>
-        <span className='text-sm text-center'>which happens first will be used</span>
+        <div className="w-9/12 truncate m-auto">
+          <div className="inline-block w-full hover:w-auto active:w-auto">
+            <div className="relative left-0 truncate text-sm hover:left-[calc(74%-100%)] hover:transition-[left] hover:duration-[1000ms] hover:ease-linear">
+              This is an OR statement, which happens first will be used.
+            </div>
+          </div>
+        </div>
       </div>
     </SettingLayout>
   )
