@@ -1,19 +1,30 @@
+import { useConfigStore } from '@/data/config'
 import { invoke } from '@/invokeTauri'
 import { useEffect, useState } from 'react'
 
-export default function ToggleButton({ name, get, set }: { name: string, get: string, set: string }) {
-  const [clicking, setClicking] = useState(false)
-  const [state, setState] = useState(false)
+export default function ToggleButton({ name, get, set }: { name: string, get?: string, set: string }) {
+  const configStore = useConfigStore()
 
-  function getToggleData() {
-    invoke(get).then(state => setState(state as boolean))
+  const [clicking, setClicking] = useState(false)
+  const [state, setState] = useState(true)
+
+  const getToggleData = async () => {
+    if (!get?.startsWith('config_')) setState(await invoke<boolean>(get!))
+    else setState(configStore.config[get?.slice(7)])
   }
 
-  useEffect(() => getToggleData(), [])
+  useEffect(() => { getToggleData() }, [])
 
   const onClick = async () => {
-    await invoke(set)
-    getToggleData()
+    if (!set.startsWith('config_')) {
+      await invoke(set)
+      await getToggleData()
+    }
+    else {
+      configStore.config[set.slice(7)] = !configStore.config[set.slice(7)]
+      await configStore.saveConfig()
+      await getToggleData()
+    }
   }
 
   return (

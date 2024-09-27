@@ -29,7 +29,7 @@ export default function SettingButton({ name }: { name: string }) {
 
       setTimeout(() => {
         settingAnimationStore.setState(true)
-        navigate('/setting/' + name)
+        navigate('/setting/' + name, { replace: true })
       }, 550 /* animation length - (30scale + 10ms) */)
     }
   }, [num])

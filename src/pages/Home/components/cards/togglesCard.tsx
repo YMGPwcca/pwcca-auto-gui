@@ -7,10 +7,10 @@ export default function TogglesFrameCard() {
   return (
     <FrameCard name={'Toggles'}>
       <ItemCard>
-        <ToggleButton name='Refresh Rate' get='' set='' />
+        <ToggleButton name='Refresh Rate' get='get_refresh_rate' set='set_refresh_rate' />
         <ToggleButton name='Startup' get='get_run_with_windows' set='set_run_with_windows' />
-        <ToggleButton name='Ethernet' get='' set='' />
-        <ToggleButton name='Monitor' get='' set='' />
+        <ToggleButton name='Ethernet' get='config_ethernet' set='config_ethernet' />
+        <ToggleButton name='Monitor' set='turn_off_screen' />
       </ItemCard>
     </FrameCard>
   )
