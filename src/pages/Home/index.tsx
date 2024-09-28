@@ -14,9 +14,7 @@ export default function Home() {
   const quitButton = async () => {
     if (!quit) {
       setQuit(true)
-      setTimeout(async () => {
-        setShow(true)
-      }, 500)
+      setTimeout(async () => setShow(true), 500)
     }
     else {
       setQuit(false)

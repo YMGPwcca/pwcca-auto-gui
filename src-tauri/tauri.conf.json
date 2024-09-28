@@ -7,7 +7,7 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "pwcca-auto",
+    "productName": "PwccaAutoGUI",
     "version": "0.0.0"
   },
   "tauri": {
