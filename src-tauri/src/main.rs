@@ -69,9 +69,6 @@ fn main() {
         window.set_always_on_top(true)?;
         window.set_skip_taskbar(true)?;
 
-        #[cfg(debug_assertions)]
-        window.open_devtools();
-
         // Threading
         let _ = thread::Builder::new()
           .name("Power_Thread".to_string())
@@ -96,9 +93,7 @@ fn main() {
         let window = app.get_window("main").unwrap();
 
         if let SystemTrayEvent::LeftClick { .. } = event {
-          let visible = window.is_visible().unwrap();
-
-          if !visible {
+          if !window.is_visible().unwrap() {
             window.eval("window.location.reload();").expect("Cannot reload window");
             let app_size = window.outer_size().expect("Cannot get app size");
             let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
@@ -113,15 +108,23 @@ fn main() {
             window.show().expect("Cannot show window");
             window.set_focus().expect("Cannot focus window");
           } else {
-            window.hide().unwrap();
+            window.hide().expect("Cannot hide window");
           }
         };
       })
-      .on_window_event(|event| {
-        if let tauri::WindowEvent::CloseRequested { api, .. } = event.event() {
+      .on_window_event(|event| match event.event() {
+        tauri::WindowEvent::CloseRequested { api, .. } => {
           event.window().hide().unwrap();
           api.prevent_close();
         }
+
+        #[cfg(not(debug_assertions))]
+        tauri::WindowEvent::Focused(focused) => {
+          if unsafe { !STATE } && !focused {
+            event.window().hide().unwrap();
+          }
+        }
+        _ => {}
       })
       .invoke_handler(tauri::generate_handler![
         commands::get_refresh_rate,

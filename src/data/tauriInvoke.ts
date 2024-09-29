@@ -4,6 +4,7 @@ export interface TauriError {
   state: boolean,
   error?: {
     kind: string,
+    command: string,
     message: string
   }
 }
@@ -20,6 +21,7 @@ export const useTauriErrorStore = create<TauriErrorStore>()(
       state: false,
       error: {
         kind: '',
+        command: '',
         message: ''
       }
     },

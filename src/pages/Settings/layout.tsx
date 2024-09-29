@@ -45,7 +45,7 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
         <div className='flex flex-col m-auto w-full h-full'>
           <div className='flex flex-row text-center mx-auto relative w-full'>
             <SVGBackArrow className='w-6 h-6 absolute left-1 top-1/2 -translate-y-1/2 cursor-pointer' onClick={() => navigate('/', { replace: true })} />
-            <div className='font-bold text-2xl text-tier0 text-center m-auto' onClick={() => tauriErrorStore.setError({ kind: 'ngu', message: 'OCCHO' })}>{location.pathname.split('/')[2]}</div>
+            <div className='font-bold text-2xl text-tier0 text-center m-auto' onClick={() => tauriErrorStore.setError({ kind: 'ngu', command: 'cac', message: 'OCCHO' })}>{location.pathname.split('/')[2]}</div>
           </div>
 
           <div className='m-auto mt-5 flex flex-col w-full h-full'>

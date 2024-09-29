@@ -9,6 +9,7 @@ export async function invoke<T>(cmd: string, args?: Record<string, unknown>): Pr
           state: true,
           error: {
             kind: 'Command',
+            command: cmd,
             message: error
           }
         }

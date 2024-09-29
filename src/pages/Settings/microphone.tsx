@@ -29,6 +29,8 @@ export default function Microphone() {
     if (!input.slice(-4).includes('.exe')) input += '.exe'
     if (list.includes(input)) return
 
+    inputRef.current!.value = ''
+
     setList([...list, input])
   }
 
