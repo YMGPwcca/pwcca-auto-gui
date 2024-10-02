@@ -12,6 +12,7 @@ use windows::{
   },
 };
 
+#[derive(Debug)]
 pub struct RegKey {
   hkey: HKEY,
   root: HKEY,
@@ -95,7 +96,7 @@ impl RegKey {
     values
   }
 
-  pub fn set_value(&self, name: &str, value: bool) {
+  pub fn set_value_data(&self, name: &str, value: bool) {
     let value = if value { [2] } else { [3] };
 
     unsafe {
@@ -104,6 +105,46 @@ impl RegKey {
       if result != ERROR_SUCCESS {
         println!("Error setting value: {}", result.to_hresult().message());
       }
+    }
+  }
+
+  pub fn get_value_data(&self, name: &str) -> Result<String> {
+    let mut size = 2048;
+    let mut buffer: [u16; 2048] = [0; 2048];
+
+    unsafe {
+      let result = RegGetValueW(
+        self.hkey,
+        None,
+        &HSTRING::from(name),
+        RRF_RT_ANY,
+        None,
+        Some(std::ptr::addr_of_mut!(buffer) as _),
+        Some(std::ptr::addr_of_mut!(size) as _),
+      );
+
+      if result != ERROR_SUCCESS {
+        println!("Error getting value: {}", result.to_hresult().message());
+      }
+    }
+
+    let data = String::from_utf16_lossy(&buffer)
+      .trim_matches(char::from(0))
+      .to_string();
+
+    if data.starts_with('"') {
+      return Ok(data);
+    }
+
+    let split = data.split(" ").collect::<Vec<&str>>();
+    let mut length = split.len() - 1;
+    loop {
+      let maybe_path = split[..length].join(" ");
+      if std::path::Path::new(&maybe_path).exists() {
+        let maybe_arg = data.split_at(maybe_path.len()).1;
+        return Ok(format!("\"{}\"{}", maybe_path, maybe_arg));
+      }
+      length -= 1;
     }
   }
 

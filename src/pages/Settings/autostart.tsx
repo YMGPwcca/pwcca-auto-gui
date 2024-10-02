@@ -9,7 +9,7 @@ interface Startup {
   group: 'User' | 'System',
   path: string,
   name: string,
-  status: boolean,
+  state: boolean,
 }
 
 export default function AutoStart() {
@@ -26,10 +26,10 @@ export default function AutoStart() {
         if (configStore.config.autostart.apps.includes(item.name))
           list.push({
             ...item,
-            status: false
+            state: false
           })
 
-        if ((item.status && !list.some(i => i.name === item.name)))
+        if ((item.state && !list.some(i => i.name === item.name)))
           list.push(item)
       }
 
@@ -69,7 +69,7 @@ export default function AutoStart() {
                 <div className='flex-grow'></div>
                 <hr className='w-0.5 h-5 border-0 bg-tier4 my-auto mr-2'></hr>
                 <label className='flex items-center cursor-pointer'>
-                  <input type='checkbox' className='sr-only peer' defaultChecked={item.status} onClick={onClick}></input>
+                  <input type='checkbox' className='sr-only peer' defaultChecked={item.state} onClick={onClick}></input>
                   <div className='relative w-9 h-5 bg-tier4 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-700'></div>
                 </label>
               </div>

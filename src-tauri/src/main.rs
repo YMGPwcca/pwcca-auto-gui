@@ -6,23 +6,28 @@ mod config;
 mod mods;
 mod threading;
 
-use std::{panic::catch_unwind, process::exit, thread};
+use std::{panic::catch_unwind, process::exit, thread, time::Duration};
 
 use config::Config;
-use mods::{process::get_processes_by_name, startup::task_scheduler::TaskScheduler, taskbar::get_taskbar_size};
+use mods::{
+  power::get_power_status, process::get_processes_by_name, startup::task_scheduler::TaskScheduler,
+  taskbar::get_taskbar_size,
+};
 use threading::*;
 
 use anyhow::Error;
-use tauri::{Manager, PhysicalPosition, PhysicalSize, SystemTray, SystemTrayEvent};
+use tauri::{CustomMenuItem, Manager, PhysicalPosition, PhysicalSize, SystemTray, SystemTrayEvent, SystemTrayMenu};
 use windows::{
   core::{w, BSTR},
   Win32::{
     Foundation::HWND,
+    System::SystemInformation::GetTickCount64,
     UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK, MB_SYSTEMMODAL},
   },
 };
 
 pub static mut CONFIG: Config = Config::new();
+pub static mut IS_START_WITH_BATTERY: bool = false;
 
 fn main() {
   let catch_panic = catch_unwind::<_, Result<_, Error>>(|| {
@@ -32,12 +37,18 @@ fn main() {
         MessageBoxW(
           HWND::default(),
           w!("Another instance is already running"),
-          w!("Error"),
+          w!("PwccaAutoGUI"),
           MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
         )
       };
 
       exit(1);
+    }
+
+    unsafe {
+      if Duration::from_millis(GetTickCount64()).as_secs() < 60 && !get_power_status().is_plugged_in {
+        IS_START_WITH_BATTERY = true;
+      }
     }
 
     // Read config from file
@@ -88,28 +99,40 @@ fn main() {
 
         Ok(())
       })
-      .system_tray(SystemTray::new().with_tooltip("Pwcca Auto GUI"))
+      .system_tray(
+        SystemTray::new()
+          .with_tooltip("Pwcca Auto GUI")
+          .with_menu(SystemTrayMenu::new().add_item(CustomMenuItem::new("quit", "Quit"))),
+      )
       .on_system_tray_event(|app, event| {
         let window = app.get_window("main").unwrap();
 
-        if let SystemTrayEvent::LeftClick { .. } = event {
-          if !window.is_visible().unwrap() {
-            window.eval("window.location.reload();").expect("Cannot reload window");
-            let app_size = window.outer_size().expect("Cannot get app size");
-            let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
-            let monitor_size = monitor.size();
-
-            window
-              .set_position(PhysicalPosition::new(
-                monitor_size.width - (app_size.width + 20),
-                (monitor_size.height - get_taskbar_size().height) - (app_size.height + 20),
-              ))
-              .expect("Cannot set window position");
-            window.show().expect("Cannot show window");
-            window.set_focus().expect("Cannot focus window");
-          } else {
-            window.hide().expect("Cannot hide window");
+        match event {
+          SystemTrayEvent::MenuItemClick { id, .. } => {
+            if id.as_str() == "quit" {
+              app.exit(0);
+            }
           }
+          SystemTrayEvent::LeftClick { .. } => {
+            if !window.is_visible().unwrap() {
+              window.eval("window.location.reload();").expect("Cannot reload window");
+              let app_size = window.outer_size().expect("Cannot get app size");
+              let monitor = window.current_monitor().expect("Cannot get monitor").unwrap();
+              let monitor_size = monitor.size();
+
+              window
+                .set_position(PhysicalPosition::new(
+                  monitor_size.width - (app_size.width + 20),
+                  (monitor_size.height - get_taskbar_size().height) - (app_size.height + 20),
+                ))
+                .expect("Cannot set window position");
+              window.show().expect("Cannot show window");
+              window.set_focus().expect("Cannot focus window");
+            } else {
+              window.hide().expect("Cannot hide window");
+            }
+          }
+          _ => {}
         };
       })
       .on_window_event(|event| match event.event() {
@@ -120,7 +143,7 @@ fn main() {
 
         #[cfg(not(debug_assertions))]
         tauri::WindowEvent::Focused(focused) => {
-          if unsafe { !STATE } && !focused {
+          if !focused {
             event.window().hide().unwrap();
           }
         }
@@ -150,21 +173,21 @@ fn main() {
         MessageBoxW(
           HWND::default(),
           &BSTR::from(panic_msg),
-          w!("Error"),
+          w!("PwccaAutoGUI"),
           MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
         );
       } else if let Some(panic_msg) = e.downcast_ref::<&str>() {
         MessageBoxW(
           HWND::default(),
           &BSTR::from(panic_msg.to_string()),
-          w!("Error"),
+          w!("PwccaAutoGUI"),
           MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
         );
       } else {
         MessageBoxW(
           HWND::default(),
           w!("Program closed unexpectedly"),
-          w!("Error"),
+          w!("PwccaAutoGUI"),
           MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
         );
       }

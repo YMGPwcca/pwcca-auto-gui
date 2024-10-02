@@ -1,14 +1,17 @@
-use std::{thread, time::Duration};
+use std::{os::windows::process::CommandExt, process::Command, thread, time::Duration};
 
-use crate::mods::{
-  connection::{is_ethernet_plugged_in, set_wifi_state},
-  media::{
-    change_default_output, enumerate_audio_devices, get_active_audio_applications, get_default_device, init,
-    types::{device::DeviceType, error::AudioDeviceError},
+use crate::{
+  mods::{
+    connection::{is_ethernet_plugged_in, set_wifi_state},
+    media::{
+      change_default_output, enumerate_audio_devices, get_active_audio_applications, get_default_device, init,
+      types::{device::DeviceType, error::AudioDeviceError},
+    },
+    power::{get_active_power_scheme, get_all_power_schemes, get_power_status, set_active_power_scheme},
+    startup::registry::{get_all_startup_items, get_startup_item_value, set_startup_item_state},
+    taskbar::taskbar_automation,
   },
-  power::{get_active_power_scheme, get_all_power_schemes, get_power_status, set_active_power_scheme},
-  startup::registry::{get_all_startup_items, set_startup_item_state},
-  taskbar::taskbar_automation,
+  IS_START_WITH_BATTERY,
 };
 
 use anyhow::Result;
@@ -136,6 +139,8 @@ pub fn autostart_thread() {
   // Initialize the autostart thread
   println!("  + Running Autostart Thread");
 
+  let mut ran = false;
+
   loop {
     if unsafe { CONFIG.autostart.enabled } {
       let disallow: Vec<String> = unsafe { CONFIG.autostart.apps.clone() };
@@ -143,14 +148,59 @@ pub fn autostart_thread() {
       let is_plugged_in = get_power_status().is_plugged_in;
       let startup_items = get_all_startup_items().expect("Cannot get all startup items");
 
-      for item in startup_items {
+      for item in &startup_items {
         if disallow.contains(&item.name) {
-          set_startup_item_state(&item.name, is_plugged_in)
+          set_startup_item_state(item, is_plugged_in)
             .unwrap_or_else(|_| panic!("Cannot disable {} startup", item.name));
         }
+      }
+
+      if unsafe { IS_START_WITH_BATTERY } && is_plugged_in && !ran {
+        let _ = thread::Builder::new()
+          .name("AutoStart Run Thread".to_string())
+          .spawn(move || {
+            let list = startup_items
+              .iter()
+              .filter(|e| disallow.contains(&e.name))
+              .collect::<Vec<_>>();
+
+            for item in list {
+              let startup_value = get_startup_item_value(item).expect("Cannot get startup item value");
+              let mut cmd = Command::new("cmd")
+                .raw_arg("/C")
+                .raw_arg("start")
+                .raw_arg("\"\"")
+                .raw_arg(&startup_value)
+                .spawn()
+                .expect("Cannot start program");
+
+              std::thread::sleep(Duration::from_secs(1));
+              cmd.kill().expect("Cannot kill program");
+            }
+          });
+
+        ran = true;
       }
     }
 
     std::thread::sleep(Duration::from_secs(1));
   }
+}
+
+#[test]
+fn test() {
+  let status = Command::new("cmd")
+    .args([
+      "/C",
+      "start",
+      "/b",
+      "",
+      "E:\\Riot Games\\Riot Client\\RiotClientServices.exe",
+      "--launch-background-mode",
+    ])
+    .status()
+    .expect("Failed to spawn child process");
+
+  // Handle the status of the child process as needed
+  println!("Child process exited with status: {}", status.code().unwrap_or(-1));
 }
