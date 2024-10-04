@@ -186,21 +186,3 @@ pub fn autostart_thread() {
     std::thread::sleep(Duration::from_secs(1));
   }
 }
-
-#[test]
-fn test() {
-  let status = Command::new("cmd")
-    .args([
-      "/C",
-      "start",
-      "/b",
-      "",
-      "E:\\Riot Games\\Riot Client\\RiotClientServices.exe",
-      "--launch-background-mode",
-    ])
-    .status()
-    .expect("Failed to spawn child process");
-
-  // Handle the status of the child process as needed
-  println!("Child process exited with status: {}", status.code().unwrap_or(-1));
-}
