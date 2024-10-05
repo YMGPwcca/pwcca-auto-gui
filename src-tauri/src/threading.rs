@@ -1,4 +1,4 @@
-use std::{os::windows::process::CommandExt, process::Command, thread, time::Duration};
+use std::{thread, time::Duration};
 
 use crate::{
   mods::{
@@ -8,6 +8,7 @@ use crate::{
       types::{device::DeviceType, error::AudioDeviceError},
     },
     power::{get_active_power_scheme, get_all_power_schemes, get_power_status, set_active_power_scheme},
+    program::Program,
     startup::registry::{get_all_startup_items, get_startup_item_value, set_startup_item_state},
     taskbar::taskbar_automation,
   },
@@ -164,18 +165,11 @@ pub fn autostart_thread() {
               .filter(|e| disallow.contains(&e.name))
               .collect::<Vec<_>>();
 
-            for item in list {
-              let startup_value = get_startup_item_value(item).expect("Cannot get startup item value");
-              let mut cmd = Command::new("cmd")
-                .raw_arg("/C")
-                .raw_arg("start")
-                .raw_arg("\"\"")
-                .raw_arg(&startup_value)
-                .spawn()
-                .expect("Cannot start program");
+            let program = Program::new().expect("Cannot initialize program module");
 
-              std::thread::sleep(Duration::from_secs(1));
-              cmd.kill().expect("Cannot kill program");
+            for item in list {
+              let (file, args) = get_startup_item_value(item).expect("Cannot get startup item value");
+              program.run(file, args).expect("Cannot run startup program");
             }
           });
 
