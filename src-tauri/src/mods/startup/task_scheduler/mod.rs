@@ -8,9 +8,9 @@ use windows::{
     System::{
       Com::{CoCreateInstance, CoInitialize, CoUninitialize, CLSCTX_ALL},
       TaskScheduler::{
-        IExecAction, ILogonTrigger, ITaskFolder, ITaskService, TaskScheduler as GUID,
-        TASK_ACTION_EXEC, TASK_CREATE_OR_UPDATE, TASK_INSTANCES_STOP_EXISTING,
-        TASK_LOGON_INTERACTIVE_TOKEN, TASK_RUNLEVEL_HIGHEST, TASK_TRIGGER_LOGON,
+        IExecAction, ILogonTrigger, ITaskFolder, ITaskService, TaskScheduler as GUID, TASK_ACTION_EXEC,
+        TASK_CREATE_OR_UPDATE, TASK_INSTANCES_STOP_EXISTING, TASK_LOGON_INTERACTIVE_TOKEN, TASK_RUNLEVEL_HIGHEST,
+        TASK_TRIGGER_LOGON,
       },
     },
   },
@@ -98,10 +98,7 @@ impl TaskScheduler {
 
   pub fn is_service_created(&self, name: &str) -> bool {
     unsafe {
-      let folder = self
-        .0
-        .GetFolder(&BSTR::from(r"\"))
-        .expect("Cannot get folder");
+      let folder = self.0.GetFolder(&BSTR::from(r"\")).expect("Cannot get folder");
       let task = folder.GetTask(&BSTR::from(name));
 
       if task.is_err() {

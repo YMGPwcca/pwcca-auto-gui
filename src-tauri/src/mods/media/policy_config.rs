@@ -39,6 +39,5 @@ unsafe impl Interface for IPolicyConfig {
 pub struct IPolicyConfig_Vtbl {
   pub base__: IUnknown_Vtbl,
   padding: [*const c_void; 10],
-  pub SetDefaultEndpoint:
-    unsafe extern "system" fn(this: *mut c_void, wszDeviceId: PCWSTR, eRole: ERole) -> HRESULT,
+  pub SetDefaultEndpoint: unsafe extern "system" fn(this: *mut c_void, wszDeviceId: PCWSTR, eRole: ERole) -> HRESULT,
 }

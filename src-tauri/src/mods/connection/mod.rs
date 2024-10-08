@@ -6,15 +6,14 @@ use windows::Win32::{
   Foundation::{ERROR_SUCCESS, HANDLE, WIN32_ERROR},
   NetworkManagement::{
     IpHelper::{
-      GetAdaptersAddresses, GAA_FLAG_SKIP_ANYCAST, GAA_FLAG_SKIP_DNS_SERVER,
-      GAA_FLAG_SKIP_MULTICAST, GAA_FLAG_SKIP_UNICAST, IP_ADAPTER_ADDRESSES_LH,
+      GetAdaptersAddresses, GAA_FLAG_SKIP_ANYCAST, GAA_FLAG_SKIP_DNS_SERVER, GAA_FLAG_SKIP_MULTICAST,
+      GAA_FLAG_SKIP_UNICAST, IP_ADAPTER_ADDRESSES_LH,
     },
     Ndis::IfOperStatusUp,
     WiFi::{
-      dot11_radio_state_off, dot11_radio_state_on, wlan_intf_opcode_radio_state, WlanCloseHandle,
-      WlanEnumInterfaces, WlanFreeMemory, WlanGetAvailableNetworkList, WlanGetNetworkBssList,
-      WlanOpenHandle, WlanSetInterface, WLAN_AVAILABLE_NETWORK, WLAN_BSS_ENTRY,
-      WLAN_INTERFACE_INFO, WLAN_PHY_RADIO_STATE,
+      dot11_radio_state_off, dot11_radio_state_on, wlan_intf_opcode_radio_state, WlanCloseHandle, WlanEnumInterfaces,
+      WlanFreeMemory, WlanGetAvailableNetworkList, WlanGetNetworkBssList, WlanOpenHandle, WlanSetInterface,
+      WLAN_AVAILABLE_NETWORK, WLAN_BSS_ENTRY, WLAN_INTERFACE_INFO, WLAN_PHY_RADIO_STATE,
     },
   },
 };
@@ -23,8 +22,7 @@ fn open_handle() -> Result<HANDLE, WlanHandlerError> {
   let mut handle = HANDLE::default();
   let mut current_version = 0;
 
-  let open_handle_result =
-    WIN32_ERROR(unsafe { WlanOpenHandle(2, None, &mut current_version, &mut handle) });
+  let open_handle_result = WIN32_ERROR(unsafe { WlanOpenHandle(2, None, &mut current_version, &mut handle) });
   if open_handle_result != ERROR_SUCCESS {
     unsafe { WlanCloseHandle(handle, None) };
     return Err(WlanHandlerError::new(open_handle_result));
@@ -37,8 +35,7 @@ fn enum_interfaces(handle: &HANDLE) -> Result<Vec<WLAN_INTERFACE_INFO>, WlanHand
   let mut interface_info_list = std::ptr::null_mut();
 
   unsafe {
-    let enum_interfaces_result =
-      WIN32_ERROR(WlanEnumInterfaces(*handle, None, &mut interface_info_list));
+    let enum_interfaces_result = WIN32_ERROR(WlanEnumInterfaces(*handle, None, &mut interface_info_list));
     if enum_interfaces_result != ERROR_SUCCESS {
       WlanCloseHandle(*handle, None);
       return Err(WlanHandlerError::new(enum_interfaces_result));
@@ -47,11 +44,8 @@ fn enum_interfaces(handle: &HANDLE) -> Result<Vec<WLAN_INTERFACE_INFO>, WlanHand
     // https://stackoverflow.com/a/78779478/9879620
     let interface_info_ptr = std::ptr::addr_of!((*interface_info_list).InterfaceInfo);
     let interface_info_len = (*interface_info_list).dwNumberOfItems as usize;
-    let interface_info = std::slice::from_raw_parts(
-      interface_info_ptr.cast::<WLAN_INTERFACE_INFO>(),
-      interface_info_len,
-    )
-    .to_vec();
+    let interface_info =
+      std::slice::from_raw_parts(interface_info_ptr.cast::<WLAN_INTERFACE_INFO>(), interface_info_len).to_vec();
 
     WlanFreeMemory(interface_info_list.cast());
 
@@ -80,9 +74,7 @@ fn get_available_network_list(
     // https://stackoverflow.com/a/78779478/9879620
     let networks_ptr = std::ptr::addr_of!((*available_network_list).Network);
     let networks_len = (*available_network_list).dwNumberOfItems as usize;
-    let networks =
-      std::slice::from_raw_parts(networks_ptr.cast::<WLAN_AVAILABLE_NETWORK>(), networks_len)
-        .to_vec();
+    let networks = std::slice::from_raw_parts(networks_ptr.cast::<WLAN_AVAILABLE_NETWORK>(), networks_len).to_vec();
 
     WlanFreeMemory(available_network_list.cast());
 
@@ -113,9 +105,7 @@ fn get_network_bss_list(
     // https://stackoverflow.com/a/78779478/9879620
     let bss_entries_ptr = std::ptr::addr_of!((*bssid_list).wlanBssEntries);
     let bss_entries_len = (*bssid_list).dwNumberOfItems as usize;
-    let bss_entries =
-      std::slice::from_raw_parts(bss_entries_ptr.cast::<WLAN_BSS_ENTRY>(), bss_entries_len)
-        .to_vec();
+    let bss_entries = std::slice::from_raw_parts(bss_entries_ptr.cast::<WLAN_BSS_ENTRY>(), bss_entries_len).to_vec();
 
     WlanFreeMemory(bssid_list.cast());
 
@@ -137,10 +127,7 @@ pub fn get_available_networks() -> Result<Vec<Wlan>, WlanHandlerError> {
 
     let available_network_list = get_available_network_list(&handle, &interface)?;
     for network in &available_network_list {
-      network_list.push(Wlan::new(
-        network,
-        get_network_bss_list(&handle, &interface, network)?,
-      ));
+      network_list.push(Wlan::new(network, get_network_bss_list(&handle, &interface, network)?));
     }
     drop(available_network_list);
   }
@@ -159,10 +146,7 @@ pub fn is_ethernet_plugged_in() -> bool {
   let result = WIN32_ERROR(unsafe {
     GetAdaptersAddresses(
       0, // AF_UNSPEC
-      GAA_FLAG_SKIP_UNICAST
-        | GAA_FLAG_SKIP_ANYCAST
-        | GAA_FLAG_SKIP_MULTICAST
-        | GAA_FLAG_SKIP_DNS_SERVER,
+      GAA_FLAG_SKIP_UNICAST | GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST | GAA_FLAG_SKIP_DNS_SERVER,
       None,
       Some(adapters_addresses_buffer.as_mut_ptr() as *mut IP_ADAPTER_ADDRESSES_LH),
       &mut buf_len,
@@ -170,8 +154,7 @@ pub fn is_ethernet_plugged_in() -> bool {
   });
 
   if result == ERROR_SUCCESS {
-    let mut adapter_addresses_ptr =
-      adapters_addresses_buffer.as_mut_ptr() as *mut IP_ADAPTER_ADDRESSES_LH;
+    let mut adapter_addresses_ptr = adapters_addresses_buffer.as_mut_ptr() as *mut IP_ADAPTER_ADDRESSES_LH;
 
     while !adapter_addresses_ptr.is_null() {
       let adapter = unsafe { adapter_addresses_ptr.read_unaligned() };

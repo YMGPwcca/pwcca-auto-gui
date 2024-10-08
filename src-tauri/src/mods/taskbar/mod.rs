@@ -13,8 +13,7 @@ use windows::Win32::{
   },
   UI::{
     Shell::{
-      SHAppBarMessage, ABM_GETSTATE, ABM_GETTASKBARPOS, ABM_SETSTATE, ABS_ALWAYSONTOP,
-      ABS_AUTOHIDE, APPBARDATA,
+      SHAppBarMessage, ABM_GETSTATE, ABM_GETTASKBARPOS, ABM_SETSTATE, ABS_ALWAYSONTOP, ABS_AUTOHIDE, APPBARDATA,
     },
     WindowsAndMessaging::{EnumWindows, GetWindowThreadProcessId, IsWindowVisible, IsZoomed},
   },
@@ -53,8 +52,7 @@ fn get_process_name(process_id: u32) -> String {
       return String::new();
     };
 
-    let process_path =
-      String::from_utf16(&process_path_buffer[..byte_written as usize]).unwrap_or_default();
+    let process_path = String::from_utf16(&process_path_buffer[..byte_written as usize]).unwrap_or_default();
     let process_name = String::from_str(
       Path::new(&process_path)
         .file_name()

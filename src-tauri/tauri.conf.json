@@ -2,39 +2,23 @@
   "build": {
     "beforeDevCommand": "bun run dev",
     "beforeBuildCommand": "bun run build",
-    "devPath": "http://localhost:3000",
-    "distDir": "../dist",
-    "withGlobalTauri": true
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:3000"
   },
-  "package": {
-    "productName": "PwccaAutoGUI",
-    "version": "0.0.0"
+  "bundle": {
+    "active": true,
+    "targets": "msi",
+    "icon": [
+      "icons/icon.ico"
+    ]
   },
-  "tauri": {
-    "systemTray": {
-      "iconPath": "icons/icon.ico",
-      "iconAsTemplate": true
-    },
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "dialog": {
-        "all": false,
-        "message": true
-      },
-      "window": {
-        "all": false,
-        "close": true,
-        "hide": true,
-        "startDragging": true,
-        "setAlwaysOnTop": true,
-        "setPosition": true,
-        "setSize": true
-      }
-    },
+  "productName": "PwccaAutoGUI",
+  "mainBinaryName": "PwccaAutoGUI",
+  "version": "0.0.0",
+  "identifier": "ymg.pwcca.auto",
+  "plugins": {},
+  "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
@@ -45,19 +29,12 @@
         "resizable": false,
         "decorations": false,
         "transparent": true,
-        "visible": false
+        "visible": false,
+        "shadow": false
       }
     ],
     "security": {
       "csp": null
-    },
-    "bundle": {
-      "active": true,
-      "targets": "msi",
-      "identifier": "ymg.pwcca.auto",
-      "icon": [
-        "icons/icon.ico"
-      ]
     }
   }
 }

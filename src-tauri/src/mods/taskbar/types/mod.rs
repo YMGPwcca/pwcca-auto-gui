@@ -5,10 +5,7 @@ pub struct TaskbarSize {
 
 impl TaskbarSize {
   pub fn new() -> Self {
-    Self {
-      height: 0,
-      width: 0,
-    }
+    Self { height: 0, width: 0 }
   }
 }
 

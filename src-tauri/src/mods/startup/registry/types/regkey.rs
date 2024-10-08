@@ -6,8 +6,8 @@ use windows::{
   Win32::{
     Foundation::ERROR_SUCCESS,
     System::Registry::{
-      RegCloseKey, RegEnumKeyW, RegEnumValueW, RegGetValueW, RegOpenKeyExW, RegSetValueExW, HKEY,
-      KEY_READ, KEY_WRITE, REG_BINARY, REG_VALUE_TYPE, RRF_RT_ANY,
+      RegCloseKey, RegEnumKeyW, RegEnumValueW, RegGetValueW, RegOpenKeyExW, RegSetValueExW, HKEY, KEY_READ, KEY_WRITE,
+      REG_BINARY, REG_VALUE_TYPE, RRF_RT_ANY,
     },
   },
 };

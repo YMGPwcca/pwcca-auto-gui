@@ -3,8 +3,8 @@ use windows::{
   Win32::{
     Foundation::{LPARAM, WPARAM},
     Graphics::Gdi::{
-      ChangeDisplaySettingsW, EnumDisplaySettingsW, CDS_GLOBAL, CDS_UPDATEREGISTRY, DEVMODEW,
-      DISP_CHANGE_SUCCESSFUL, ENUM_CURRENT_SETTINGS, ENUM_DISPLAY_SETTINGS_MODE,
+      ChangeDisplaySettingsW, EnumDisplaySettingsW, CDS_GLOBAL, CDS_UPDATEREGISTRY, DEVMODEW, DISP_CHANGE_SUCCESSFUL,
+      ENUM_CURRENT_SETTINGS, ENUM_DISPLAY_SETTINGS_MODE,
     },
     UI::WindowsAndMessaging::{GetForegroundWindow, SendMessageW, SC_MONITORPOWER, WM_SYSCOMMAND},
   },
@@ -28,12 +28,7 @@ pub fn get_all_frequencies() -> Vec<u32> {
     let mut index = 0;
 
     loop {
-      if EnumDisplaySettingsW(
-        PCWSTR::null(),
-        ENUM_DISPLAY_SETTINGS_MODE(index),
-        &mut dev_mode,
-      ) == false
-      {
+      if EnumDisplaySettingsW(PCWSTR::null(), ENUM_DISPLAY_SETTINGS_MODE(index), &mut dev_mode) == false {
         break;
       }
 

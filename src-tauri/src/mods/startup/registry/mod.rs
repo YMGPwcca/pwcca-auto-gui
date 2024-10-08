@@ -100,10 +100,7 @@ fn get_startup_items_in_folder(group: &StartupGroup) -> Result<Vec<StartupItem>>
   Ok(items)
 }
 
-fn get_startup_item_state(
-  group: &StartupGroup,
-  items: &[StartupItem],
-) -> Result<Vec<StartupState>> {
+fn get_startup_item_state(group: &StartupGroup, items: &[StartupItem]) -> Result<Vec<StartupState>> {
   let mut result: Vec<StartupState> = Vec::new();
 
   let root = match group {
@@ -111,28 +108,18 @@ fn get_startup_item_state(
     StartupGroup::System => HKEY_LOCAL_MACHINE,
   };
 
-  let approved_path =
-    String::from(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\");
+  let approved_path = String::from(r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\");
 
   let user_key = RegKey::open(root, PCWSTR(HSTRING::from(&approved_path).as_ptr()))?;
 
   for key in user_key.enum_key() {
-    let startup_key = RegKey::open(
-      root,
-      PCWSTR(HSTRING::from(approved_path.clone() + &key).as_ptr()),
-    )?;
+    let startup_key = RegKey::open(root, PCWSTR(HSTRING::from(approved_path.clone() + &key).as_ptr()))?;
 
     for value in startup_key.enum_value() {
-      let data = RegKey::open(
-        root,
-        PCWSTR(HSTRING::from(approved_path.clone() + &key).as_ptr()),
-      )?
-      .is_startup_enabled(PCWSTR(HSTRING::from(&value).as_ptr()))?;
+      let data = RegKey::open(root, PCWSTR(HSTRING::from(approved_path.clone() + &key).as_ptr()))?
+        .is_startup_enabled(PCWSTR(HSTRING::from(&value).as_ptr()))?;
 
-      let contain = items
-        .iter()
-        .map(|e| e.name.clone())
-        .position(|e| e == value);
+      let contain = items.iter().map(|e| e.name.clone()).position(|e| e == value);
       if contain.is_some() {
         let item = &items[contain.unwrap()];
 

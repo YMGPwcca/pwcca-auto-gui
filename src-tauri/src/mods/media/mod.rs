@@ -16,8 +16,7 @@ use windows::{
     Foundation::{CloseHandle, MAX_PATH, S_OK},
     Media::Audio::{
       eCapture, eCommunications, eConsole, eRender, AudioSessionStateActive, IAudioSessionControl2,
-      IAudioSessionManager2, IMMDevice, IMMDeviceEnumerator, MMDeviceEnumerator,
-      DEVICE_STATE_ACTIVE,
+      IAudioSessionManager2, IMMDevice, IMMDeviceEnumerator, MMDeviceEnumerator, DEVICE_STATE_ACTIVE,
     },
     System::{
       Com::{CoCreateInstance, CoInitialize, CLSCTX_ALL, STGM_READ},
@@ -37,10 +36,7 @@ pub fn init() -> Result<(), AudioDeviceError> {
 
     let res = CoInitialize(None);
     if res.is_err() {
-      return Err(AudioDeviceError::new(
-        ErrorEnum::InitializationFailed,
-        res.into(),
-      ));
+      return Err(AudioDeviceError::new(ErrorEnum::InitializationFailed, res.into()));
     }
     IS_INITIALIZED = true;
     Ok(())
@@ -87,9 +83,8 @@ pub fn get_default_device(device_type: &DeviceType) -> Result<Device, AudioDevic
   init_check()?;
 
   unsafe {
-    let enumerator: IMMDeviceEnumerator =
-      CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)
-        .map_err(|e| AudioDeviceError::new(ErrorEnum::InitializationFailed, e))?;
+    let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)
+      .map_err(|e| AudioDeviceError::new(ErrorEnum::InitializationFailed, e))?;
     let device = match device_type {
       DeviceType::Input => enumerator
         .GetDefaultAudioEndpoint(eCapture, eCommunications)
@@ -111,9 +106,8 @@ pub fn enumerate_audio_devices(device_type: &DeviceType) -> Result<Vec<Device>, 
   let mut all_devices = Vec::<Device>::new();
 
   unsafe {
-    let enumerator: IMMDeviceEnumerator =
-      CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)
-        .map_err(|e| AudioDeviceError::new(ErrorEnum::InitializationFailed, e))?;
+    let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)
+      .map_err(|e| AudioDeviceError::new(ErrorEnum::InitializationFailed, e))?;
     let devices = match device_type {
       DeviceType::Input => enumerator
         .EnumAudioEndpoints(eCapture, DEVICE_STATE_ACTIVE)
@@ -166,8 +160,7 @@ fn get_process_name(process_id: u32) -> Result<String, AudioDeviceError> {
       return Ok(String::new());
     };
 
-    let process_path =
-      String::from_utf16(&process_path_buffer[..byte_written as usize]).unwrap_or_default();
+    let process_path = String::from_utf16(&process_path_buffer[..byte_written as usize]).unwrap_or_default();
     let process_name = String::from_str(
       Path::new(&process_path)
         .file_name()
@@ -184,9 +177,7 @@ fn get_process_name(process_id: u32) -> Result<String, AudioDeviceError> {
   Ok(String::new())
 }
 
-pub fn get_active_audio_applications(
-  device_type: &DeviceType,
-) -> Result<Vec<String>, AudioDeviceError> {
+pub fn get_active_audio_applications(device_type: &DeviceType) -> Result<Vec<String>, AudioDeviceError> {
   init_check()?;
 
   let mut result = Vec::<String>::new();

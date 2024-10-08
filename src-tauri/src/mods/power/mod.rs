@@ -7,8 +7,8 @@ use windows::{
   Win32::{
     Foundation::{ERROR_NO_MORE_ITEMS, ERROR_SUCCESS, WIN32_ERROR},
     System::Power::{
-      GetSystemPowerStatus, PowerEnumerate, PowerGetActiveScheme, PowerReadFriendlyName,
-      PowerSetActiveScheme, ACCESS_SCHEME, SYSTEM_POWER_STATUS,
+      GetSystemPowerStatus, PowerEnumerate, PowerGetActiveScheme, PowerReadFriendlyName, PowerSetActiveScheme,
+      ACCESS_SCHEME, SYSTEM_POWER_STATUS,
     },
   },
 };

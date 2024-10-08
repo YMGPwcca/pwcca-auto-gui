@@ -12,13 +12,11 @@ use crate::{
     startup::registry::{get_all_startup_items, get_startup_item_value, set_startup_item_state},
     taskbar::taskbar_automation,
   },
-  IS_START_WITH_BATTERY,
+  CONFIG, IS_START_WITH_BATTERY,
 };
 
 use anyhow::Result;
 use windows::Win32::Foundation::WIN32_ERROR;
-
-use crate::CONFIG;
 
 pub fn media_thread() -> Result<(), AudioDeviceError> {
   // Initialize the media thread

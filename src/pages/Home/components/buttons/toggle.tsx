@@ -9,8 +9,10 @@ export default function ToggleButton({ name, get, set }: { name: string, get?: s
   const [state, setState] = useState(true)
 
   const getToggleData = async () => {
-    if (!get?.startsWith('config_')) setState(await invoke<boolean>(get!))
-    else setState(configStore.config[get?.slice(7)])
+    if (get) {
+      if (!get.startsWith('config_')) setState(await invoke<boolean>(get!))
+      else setState(configStore.config[get.slice(7)])
+    }
   }
 
   useEffect(() => { getToggleData() }, [])
