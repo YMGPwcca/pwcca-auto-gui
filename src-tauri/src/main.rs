@@ -4,9 +4,10 @@
 mod commands;
 mod config;
 mod mods;
+mod panic_catching;
 mod threading;
 
-use std::{panic, thread, time::Duration};
+use std::time::Duration;
 
 use config::Config;
 use mods::{power::get_power_status, process::get_processes_by_name, startup::task_scheduler::TaskScheduler};
@@ -17,14 +18,7 @@ use tauri::{
   tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
   Builder, Manager, PhysicalPosition, PhysicalSize, Wry,
 };
-use windows::{
-  core::{w, BSTR},
-  Win32::{
-    Foundation::HWND,
-    System::SystemInformation::GetTickCount64,
-    UI::WindowsAndMessaging::{MessageBoxW, MB_ICONERROR, MB_OK, MB_SYSTEMMODAL},
-  },
-};
+use windows::Win32::System::SystemInformation::GetTickCount64;
 
 pub static mut CONFIG: Config = Config::new();
 pub static mut IS_START_WITH_BATTERY: bool = false;
@@ -83,21 +77,11 @@ fn build_tauri() -> Builder<Wry> {
       window.set_skip_taskbar(true)?;
 
       // Threading
-      let _ = thread::Builder::new()
-        .name("Power_Thread".to_string())
-        .spawn(power_thread);
-      let _ = thread::Builder::new()
-        .name("Media_Thread".to_string())
-        .spawn(media_thread);
-      let _ = thread::Builder::new()
-        .name("Connection_Thread".to_string())
-        .spawn(connection_thread);
-      let _ = thread::Builder::new()
-        .name("Taskbar_Thread".to_string())
-        .spawn(taskbar_thread);
-      let _ = thread::Builder::new()
-        .name("Autostart_Thread".to_string())
-        .spawn(autostart_thread);
+      build_thread("Power_Thread".to_string(), power_thread);
+      build_thread("Media_Thread".to_string(), media_thread);
+      build_thread("Connection_Thread".to_string(), connection_thread);
+      build_thread("Taskbar_Thread".to_string(), taskbar_thread);
+      build_thread("Autostart_Thread".to_string(), autostart_thread);
 
       Ok(())
     })
@@ -129,7 +113,8 @@ fn build_tauri() -> Builder<Wry> {
 }
 
 fn main() {
-  let catch_panic = panic::catch_unwind(|| {
+  panic_catching::init();
+  panic_catching::trace(|| {
     // Check if another instance is running
     if get_processes_by_name("PwccaAutoGUI")
       .expect("Cannot get processes")
@@ -153,32 +138,4 @@ fn main() {
       .run(tauri::generate_context!())
       .expect("Error while running tauri application");
   });
-
-  match catch_panic {
-    Ok(_) => {}
-    Err(e) => unsafe {
-      if let Some(panic_msg) = e.downcast_ref::<String>() {
-        MessageBoxW(
-          HWND::default(),
-          &BSTR::from(panic_msg),
-          w!("PwccaAutoGUI"),
-          MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
-        );
-      } else if let Some(panic_msg) = e.downcast_ref::<&str>() {
-        MessageBoxW(
-          HWND::default(),
-          &BSTR::from(panic_msg.to_string()),
-          w!("PwccaAutoGUI"),
-          MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
-        );
-      } else {
-        MessageBoxW(
-          HWND::default(),
-          w!("Program closed unexpectedly"),
-          w!("PwccaAutoGUI"),
-          MB_SYSTEMMODAL | MB_ICONERROR | MB_OK,
-        );
-      }
-    },
-  }
 }

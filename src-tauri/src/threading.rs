@@ -1,4 +1,4 @@
-use std::{thread, time::Duration};
+use std::{panic, thread, time::Duration};
 
 use crate::{
   mods::{
@@ -12,6 +12,7 @@ use crate::{
     startup::registry::{get_all_startup_items, get_startup_item_value, set_startup_item_state},
     taskbar::taskbar_automation,
   },
+  panic_catching::trace,
   CONFIG, IS_START_WITH_BATTERY,
 };
 
@@ -177,4 +178,12 @@ pub fn autostart_thread() {
 
     std::thread::sleep(Duration::from_secs(1));
   }
+}
+
+pub fn build_thread<F, T>(name: String, f: F)
+where
+  F: FnOnce() -> T + Send + 'static + panic::UnwindSafe,
+  T: Send + 'static,
+{
+  let _ = thread::Builder::new().name(name.to_string()).spawn(move || trace(f));
 }
