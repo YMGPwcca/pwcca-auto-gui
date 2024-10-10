@@ -1,3 +1,3 @@
-# Tauri + React + Typescript = Pain and Suffering
+## Tauri + React + Typescript + PwccaAuto = Pain and Suffering
 
-GUI for PwccaAuto
+GUI for [PwccaAuto](https://github.com/YMGPwcca/pwcca-auto)
