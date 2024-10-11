@@ -3,11 +3,9 @@ use std::{panic, thread, time::Duration};
 use crate::{
   mods::{
     connection::{is_ethernet_plugged_in, set_wifi_state},
-    media::{
-      change_default_output, enumerate_audio_devices, get_active_audio_applications, get_default_device, init,
-      types::{device::DeviceType, error::AudioDeviceError},
-    },
+    media::{types::DeviceType, Media},
     power::{get_active_power_scheme, get_all_power_schemes, get_power_status, set_active_power_scheme},
+    process::get_process_executable_name,
     program::Program,
     startup::registry::{get_all_startup_items, get_startup_item_value, set_startup_item_state},
     taskbar::taskbar_automation,
@@ -19,11 +17,11 @@ use crate::{
 use anyhow::Result;
 use windows::Win32::Foundation::WIN32_ERROR;
 
-pub fn media_thread() -> Result<(), AudioDeviceError> {
+pub fn media_thread() -> Result<()> {
   // Initialize the media thread
   println!("  + Running Media Thread");
 
-  init()?;
+  let media = Media::new()?;
 
   let mut connected = false;
 
@@ -31,12 +29,12 @@ pub fn media_thread() -> Result<(), AudioDeviceError> {
     if unsafe { CONFIG.microphone.enabled } {
       let config_includes = unsafe { &CONFIG.microphone.apps };
 
-      let all_outputs = enumerate_audio_devices(&DeviceType::Output)?;
+      let all_outputs = media.list_all_audio_devices(&DeviceType::Output)?;
 
       if all_outputs.len() > 1 {
-        let current_output = get_default_device(&DeviceType::Output)?;
+        let current_output = media.get_default_device(&DeviceType::Output)?;
 
-        let programs = get_active_audio_applications(&DeviceType::Input)?;
+        let programs = media.get_active_audio_programs(&DeviceType::Input)?;
 
         if config_includes.iter().any(|e| programs.contains(e)) {
           connected = true;
@@ -44,21 +42,21 @@ pub fn media_thread() -> Result<(), AudioDeviceError> {
           if current_output.device_type == "Speakers" {
             let headphones = all_outputs
               .iter()
-              .find(|device| device.device_type == "Headphones")
+              .find(|device| device.device_type == "Headphones" || device.device_type == "Headset")
               .unwrap();
 
-            change_default_output(headphones.device_id)?
+            media.change_default_output(headphones.device_id)?
           }
         } else if connected {
           connected = false;
 
-          if current_output.device_type == "Headphones" {
+          if current_output.device_type == "Headphones" || current_output.device_type == "Headset" {
             let headphones = all_outputs
               .iter()
               .find(|device| device.device_type == "Speakers")
               .unwrap();
 
-            change_default_output(headphones.device_id)?
+            media.change_default_output(headphones.device_id)?
           }
         }
       }
