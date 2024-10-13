@@ -28,7 +28,7 @@ fn get_processes() -> Result<Vec<u32>> {
   Ok(pids[0..(size / 4) as usize].to_vec())
 }
 
-fn get_process_executable_name(pid: &u32) -> String {
+pub fn get_process_executable_name(pid: &u32) -> String {
   unsafe {
     let handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, *pid);
     if handle.is_ok() {

@@ -1,4 +1,3 @@
-// https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/Win7Samples/winui/shell/appplatform/ExecInExplorer/ExecInExplorer.cpp
 #![allow(dead_code)]
 
 use anyhow::{Error, Result};
@@ -10,9 +9,12 @@ use windows::{
       CoCreateInstance, CoInitializeEx, CoUninitialize, IDispatch, CLSCTX_LOCAL_SERVER, COINIT_APARTMENTTHREADED,
       COINIT_DISABLE_OLE1DDE,
     },
-    UI::Shell::{
-      IShellBrowser, IShellDispatch2, IShellFolderViewDual, IShellView, IShellWindows, IUnknown_QueryService,
-      SID_STopLevelBrowser, ShellWindows, SVGIO_BACKGROUND, SWC_DESKTOP, SWFO_NEEDDISPATCH,
+    UI::{
+      Shell::{
+        IShellBrowser, IShellDispatch2, IShellFolderViewDual, IShellView, IShellWindows, IUnknown_QueryService,
+        SID_STopLevelBrowser, ShellWindows, SVGIO_BACKGROUND, SWC_DESKTOP, SWFO_NEEDDISPATCH,
+      },
+      WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId},
     },
   },
 };
@@ -101,6 +103,16 @@ impl Program {
     }
 
     Ok(())
+  }
+
+  pub fn get_foreground_program() -> u32 {
+    unsafe {
+      let foreground = GetForegroundWindow();
+
+      let mut pid = 0;
+      GetWindowThreadProcessId(foreground, Some(&mut pid));
+      pid
+    }
   }
 }
 

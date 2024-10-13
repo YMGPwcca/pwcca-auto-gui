@@ -82,6 +82,7 @@ fn build_tauri() -> Builder<Wry> {
       build_thread("Connection_Thread".to_string(), connection_thread);
       build_thread("Taskbar_Thread".to_string(), taskbar_thread);
       build_thread("Autostart_Thread".to_string(), autostart_thread);
+      build_thread("Hotkey_Thread".to_string(), hotkey_thread);
 
       Ok(())
     })

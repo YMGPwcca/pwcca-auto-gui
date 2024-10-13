@@ -1,5 +1,6 @@
 pub mod connection;
 pub mod display;
+pub mod hotkey;
 pub mod media;
 pub mod power;
 pub mod process;
