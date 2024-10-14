@@ -85,8 +85,6 @@ impl Media {
         .SetDefaultEndpoint(PCWSTR(device_id.as_ptr()), eConsole)
         .expect("Cannot set default endpoint");
 
-      drop(policy);
-
       Ok(())
     }
   }
@@ -108,11 +106,7 @@ impl Media {
       for i in 0..devices.GetCount().expect("Cannot get devices count") {
         let device = devices.Item(i).expect("Cannot get audio item");
         all_devices.push(self.get_device_info(&device).expect("Cannot get device info"));
-
-        drop(device);
       }
-
-      drop(devices);
 
       Ok(all_devices)
     }
@@ -147,13 +141,7 @@ impl Media {
           let pid = session_control.GetProcessId().expect("Cannot get active program id");
           result.push(process::get_process_executable_name(&pid));
         }
-
-        drop(session_control);
       }
-
-      drop(device);
-      drop(session_manager);
-      drop(session_list);
 
       Ok(result)
     }

@@ -26,7 +26,7 @@ export default function Microphone() {
 
     let input = inputApp.toLowerCase()
 
-    if (!input.slice(-4).includes('.exe')) input += '.exe'
+    if (input.includes('.exe')) input = input.replaceAll('.exe', '')
     if (list.includes(input)) return
 
     inputRef.current!.value = ''
