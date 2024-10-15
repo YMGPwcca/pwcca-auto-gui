@@ -10,14 +10,21 @@ mod threading;
 use std::time::Duration;
 
 use config::Config;
-use mods::{power::get_power_status, process::get_processes_by_name, startup::task_scheduler::TaskScheduler};
+use mods::{
+  media::Media,
+  power::get_power_status,
+  process::{get_process_executable_name, get_processes_by_name},
+  program::Program,
+  startup::task_scheduler::TaskScheduler,
+};
 use threading::*;
 
 use tauri::{
   menu::{Menu, MenuItem},
   tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-  Builder, Manager, PhysicalPosition, PhysicalSize, Wry,
+  Builder, Emitter, Manager, PhysicalPosition, PhysicalSize, Wry,
 };
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use windows::Win32::System::SystemInformation::GetTickCount64;
 
 pub static mut CONFIG: Config = Config::new();
@@ -70,6 +77,7 @@ fn build_tauri() -> Builder<Wry> {
         .build(app)?;
 
       // Config app size and settings
+      let handle = app.handle();
       let window = app.get_webview_window("main").unwrap();
       let app_size = PhysicalSize::new(350u32, 750u32);
       window.set_size(app_size)?;
@@ -82,7 +90,55 @@ fn build_tauri() -> Builder<Wry> {
       build_thread("Connection_Thread".to_string(), connection_thread);
       build_thread("Taskbar_Thread".to_string(), taskbar_thread);
       build_thread("Autostart_Thread".to_string(), autostart_thread);
-      build_thread("Hotkey_Thread".to_string(), hotkey_thread);
+
+      // Hotkey specific
+      let monitor = window.current_monitor().expect("Cannot get current monitor").unwrap();
+      let monitor_size = monitor.size();
+
+      let mute_size = PhysicalSize::new(200, 100);
+      let mute_position = PhysicalPosition::new(monitor_size.width - (mute_size.width + 20), 20);
+      let mute_view = handle.get_webview_window("mute").unwrap();
+      mute_view.set_size(mute_size).expect("Cannot set mute view size");
+      mute_view
+        .set_position(mute_position)
+        .expect("Cannot set mute view position");
+      mute_view
+        .set_ignore_cursor_events(true)
+        .expect("Cannot set ignore cursor events for mute view");
+      mute_view.open_devtools();
+
+      let win_f2_shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::F2);
+      handle
+        .plugin(
+          tauri_plugin_global_shortcut::Builder::new()
+            .with_handler(move |handle, shortcut, event| {
+              if shortcut == &win_f2_shortcut && event.state() == ShortcutState::Released {
+                #[derive(Clone, serde::Serialize)]
+                struct Payload {
+                  name: String,
+                  mute: bool,
+                }
+
+                let pid = Program::get_foreground_program();
+                let name = get_process_executable_name(&pid);
+                let media = Media::new().expect("Cannot initialize media module");
+
+                if let Some(mute) = media.get_mute_program(&name) {
+                  println!("{:?}", "YES");
+                  media.set_mute_program(&name, !mute);
+                  handle
+                    .emit_to("mute", "program_name", Payload { name, mute: !mute })
+                    .expect("Cannot emit to mute_window");
+                }
+              }
+            })
+            .build(),
+        )
+        .expect("Cannot build global shortcut");
+      app
+        .global_shortcut()
+        .register(win_f2_shortcut)
+        .expect("Cannot register global shortcut");
 
       Ok(())
     })
@@ -94,7 +150,7 @@ fn build_tauri() -> Builder<Wry> {
 
       #[cfg(not(debug_assertions))]
       tauri::WindowEvent::Focused(focused) => {
-        if !focused {
+        if !focused && window.label() == "main" {
           window.hide().unwrap();
         }
       }

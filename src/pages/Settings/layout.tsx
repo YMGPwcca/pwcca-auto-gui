@@ -6,6 +6,7 @@ import { useSettingAnimationStore } from '@/data/settingAnimation'
 import { useTauriErrorStore } from '@/data/tauriInvoke'
 
 import SVGBackArrow from '@/components/svg/SVGBackArrow'
+import Root from '../root'
 
 export default function SettingLayout({ children }: React.PropsWithChildren) {
   const configStore = useConfigStore()
@@ -35,7 +36,7 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
   }
 
   return (
-    <>
+    <Root>
       {/* ANIMATION FRAME */}
       <div ref={ref} className={`${!settingAnimationStore.state ? 'hidden' : 'block'} absolute bg-tier2 h-dvh w-dvw top-0 left-0 pc:rounded-xl animate-fade-out z-50`}></div>
 
@@ -68,6 +69,6 @@ export default function SettingLayout({ children }: React.PropsWithChildren) {
         </div>
 
       </div>
-    </>
+    </Root>
   )
 }

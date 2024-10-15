@@ -4,6 +4,7 @@ import { useState } from 'react'
 import TogglesFrameCard from '@/pages/Home/components/cards/togglesCard'
 import SettingsFrameCard from '@/pages/Home/components/cards/settingsCard'
 import SVGQuit from '@/components/svg/SVGQuit'
+import Root from '../root'
 
 export default function Home() {
   const [quit, setQuit] = useState(false)
@@ -23,7 +24,7 @@ export default function Home() {
   }
 
   return (
-    <>
+    <Root>
       {/* INIT FRAME */}
       <div className='relative flex m-auto bg-tier0 py-4 pc:border-2 pc:rounded-xl pc:border-tier3 w-full h-full'>
         <SVGQuit className='top-1 right-1 absolute h-6 w-6 cursor-pointer' onClick={quitButton} />
@@ -45,6 +46,6 @@ export default function Home() {
         </div>
 
       </div>
-    </>
+    </Root>
   )
 }

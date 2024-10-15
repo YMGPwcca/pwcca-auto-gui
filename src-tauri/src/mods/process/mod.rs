@@ -4,7 +4,7 @@ use anyhow::Result;
 use windows::Win32::{
   Foundation::{CloseHandle, HMODULE, MAX_PATH},
   System::{
-    ProcessStatus::{EnumProcessModulesEx, EnumProcesses, GetModuleBaseNameW, LIST_MODULES_ALL},
+    ProcessStatus::{EnumProcessModulesEx, EnumProcesses, GetModuleFileNameExW, LIST_MODULES_ALL},
     Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ},
   },
 };
@@ -28,7 +28,7 @@ fn get_processes() -> Result<Vec<u32>> {
   Ok(pids[0..(size / 4) as usize].to_vec())
 }
 
-pub fn get_process_executable_name(pid: &u32) -> String {
+pub fn get_process_executable_path(pid: &u32) -> String {
   unsafe {
     let handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, *pid);
     if handle.is_ok() {
@@ -45,19 +45,24 @@ pub fn get_process_executable_name(pid: &u32) -> String {
       );
       if result.is_ok() {
         let mut lpbasename = [0u16; MAX_PATH as usize];
-        GetModuleBaseNameW(handle, module, &mut lpbasename);
+        GetModuleFileNameExW(handle, module, &mut lpbasename);
 
-        return String::from_utf16_lossy(&lpbasename)
-          .to_lowercase()
-          .split(".exe")
-          .next()
-          .unwrap()
-          .to_string();
+        return String::from_utf16_lossy(&lpbasename).replace('\0', "").to_string();
       }
 
       let _ = CloseHandle(handle);
     }
-  };
+  }
+
+  String::new()
+}
+
+pub fn get_process_executable_name(pid: &u32) -> String {
+  let path = get_process_executable_path(pid);
+  let last_backslash = path.rfind('\\');
+  if let Some(index) = last_backslash {
+    return path[index + 1..].to_string();
+  }
 
   String::new()
 }

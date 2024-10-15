@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod types;
 
 use types::{keyboard::KeyboardKey, Key, Modifier};
@@ -31,7 +33,7 @@ impl HotKey {
     });
   }
 
-  pub fn listen_for_keys(&self, callback: fn(&Key)) {
+  pub fn listen_for_keys<F: Fn(&Key)>(&self, callback: F) {
     loop {
       let mut message = MSG::default();
       if unsafe { GetMessageW(&mut message, None, WM_HOTKEY, WM_HOTKEY).as_bool() } {

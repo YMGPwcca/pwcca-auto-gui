@@ -31,6 +31,21 @@
         "transparent": true,
         "visible": false,
         "shadow": false
+      },
+      {
+        "label": "mute",
+        "title": "PwccaAuto for PwccaPC",
+        "focus": false,
+        "maximizable": false,
+        "minimizable": false,
+        "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "visible": false,
+        "shadow": false,
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "url": "Mute"
       }
     ],
     "security": {

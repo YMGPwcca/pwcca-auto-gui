@@ -3,13 +3,8 @@ use std::{panic, thread, time::Duration};
 use crate::{
   mods::{
     connection::{is_ethernet_plugged_in, set_wifi_state},
-    hotkey::{
-      types::{keyboard::KeyboardKey, Modifier},
-      HotKey,
-    },
     media::{types::DeviceType, Media},
     power::{get_active_power_scheme, get_all_power_schemes, get_power_status, set_active_power_scheme},
-    process::get_process_executable_name,
     program::Program,
     startup::registry::{get_all_startup_items, get_startup_item_value, set_startup_item_state},
     taskbar::taskbar_automation,
@@ -180,28 +175,6 @@ pub fn autostart_thread() {
 
     std::thread::sleep(Duration::from_secs(1));
   }
-}
-
-pub fn hotkey_thread() {
-  // Initialize the hotkey thread
-  println!("  + Running Hotkey Thread");
-
-  let mut hotkey = HotKey::new();
-
-  hotkey.add_key(
-    1,
-    "Toggle mute for foreground program with Windows + F2".to_string(),
-    KeyboardKey::F2,
-    vec![Modifier::Win],
-  );
-  hotkey.listen_for_keys(|e| if e.id == 1 {
-    let pid = Program::get_foreground_program();
-    let name = get_process_executable_name(&pid);
-    let media = Media::new().expect("Cannot initialize media module");
-    if let Some(mute) = media.get_mute_program(&name) {
-      media.set_mute_program(&name, !mute);
-    }
-  });
 }
 
 pub fn build_thread<F, T>(name: String, f: F)

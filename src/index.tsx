@@ -9,23 +9,23 @@ import Microphone from '@/pages/Settings/microphone'
 import AutoStart from '@/pages/Settings/autostart'
 import Power from '@/pages/Settings/power'
 import Taskbar from '@/pages/Settings/taskbar'
-import Root from '@/pages/root'
+import Mute from '@/pages/Mute'
 
 const root = ReactDOM.createRoot(document.getElementById('root')!)
 
 root.render(
   <BrowserRouter>
-    <Root>
-      <Routes>
-        <Route path='/' element={<Home />} />
+    <Routes>
+      <Route path='/' element={<Home />} />
 
-        <Route path='/setting/Microphone' element={<Microphone />} />
-        <Route path='/setting/AutoStart' element={<AutoStart />} />
-        <Route path='/setting/Power' element={<Power />} />
-        <Route path='/setting/Taskbar' element={<Taskbar />} />
+      <Route path='/setting/Microphone' element={<Microphone />} />
+      <Route path='/setting/AutoStart' element={<AutoStart />} />
+      <Route path='/setting/Power' element={<Power />} />
+      <Route path='/setting/Taskbar' element={<Taskbar />} />
 
-        <Route path='*' element={<>404 FUCK</>} />
-      </Routes>
-    </Root>
+      <Route path='/Mute' element={<Mute />} />
+
+      <Route path='*' element={<>404 FUCK</>} />
+    </Routes>
   </BrowserRouter>
 )
