@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::env;
+
 use anyhow::Result;
 use windows::{
   core::{Interface, BSTR},
@@ -34,7 +36,7 @@ impl TaskScheduler {
   pub fn create_startup_task(&self, name: &str) -> Result<()> {
     let current_user = env!("USERNAME");
 
-    let exe_path = std::env::current_exe()?;
+    let exe_path = env::current_exe()?;
     let exe_dir = exe_path.parent().unwrap();
 
     unsafe {

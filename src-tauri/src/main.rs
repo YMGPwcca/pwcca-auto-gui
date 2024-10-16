@@ -7,7 +7,7 @@ mod mods;
 mod panic_catching;
 mod threading;
 
-use std::time::Duration;
+use std::time::{self};
 
 use config::Config;
 use mods::{
@@ -190,7 +190,7 @@ fn main() {
     }
 
     unsafe {
-      if Duration::from_millis(GetTickCount64()).as_secs() < 60 && !get_power_status().is_plugged_in {
+      if time::Duration::from_millis(GetTickCount64()).as_secs() < 60 && !get_power_status().is_plugged_in {
         IS_START_WITH_BATTERY = true;
       }
     }

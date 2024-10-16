@@ -58,7 +58,7 @@ impl Program {
         &VARIANT::default(),
         &VARIANT::default(),
         SWC_DESKTOP,
-        std::ptr::addr_of_mut!(hwnd) as _,
+        ptr::addr_of_mut!(hwnd) as _,
         SWFO_NEEDDISPATCH,
       )?;
 
@@ -73,7 +73,7 @@ impl Program {
     unsafe {
       let dispatch_background: IDispatch = shell_view.GetItemObject(SVGIO_BACKGROUND)?;
 
-      let mut p_shell_folder_view_dual = std::ptr::null_mut();
+      let mut p_shell_folder_view_dual = ptr::null_mut();
       let hr = dispatch_background.query(&IShellFolderViewDual::IID, &mut p_shell_folder_view_dual);
 
       if hr.is_err() {
@@ -83,7 +83,7 @@ impl Program {
       let shell_folder_view_dual = IShellFolderViewDual::from_raw(p_shell_folder_view_dual);
 
       let dispatch = shell_folder_view_dual.Application()?;
-      let mut p_shell_dispatch_2 = std::ptr::null_mut();
+      let mut p_shell_dispatch_2 = ptr::null_mut();
       let hr = dispatch.query(&IShellDispatch2::IID, &mut p_shell_dispatch_2);
       if hr.is_err() {
         return Err(Error::msg(hr.message()));
@@ -151,7 +151,7 @@ impl Program {
 
       let mut bitmap: mem::MaybeUninit<BITMAP> = mem::MaybeUninit::uninit();
       if GetObjectW(info.hbmColor, bitmap_size, Some(bitmap.as_mut_ptr().cast())) != bitmap_size {
-        panic!("Cannot object size is not equal to bitmap size");
+        panic!("Object size is not equal to bitmap size");
       }
 
       let bitmap = bitmap.assume_init_ref();
@@ -185,7 +185,7 @@ impl Program {
       );
       buf.set_len(buf.capacity());
 
-      if ReleaseDC(HWND(std::ptr::null_mut()), dc) != 1 {
+      if ReleaseDC(HWND(ptr::null_mut()), dc) != 1 {
         panic!("Cannot release Device Context")
       }
 

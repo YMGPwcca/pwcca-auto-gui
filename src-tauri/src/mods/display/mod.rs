@@ -1,3 +1,5 @@
+use std::mem;
+
 use windows::{
   core::PCWSTR,
   Win32::{
@@ -13,7 +15,7 @@ use windows::{
 #[allow(dead_code)]
 fn get_dev_mode() -> DEVMODEW {
   unsafe {
-    let mut dev_mode = std::mem::zeroed();
+    let mut dev_mode = mem::zeroed();
     EnumDisplaySettingsW(PCWSTR::null(), ENUM_CURRENT_SETTINGS, &mut dev_mode).unwrap();
 
     dev_mode
@@ -24,7 +26,7 @@ fn get_dev_mode() -> DEVMODEW {
 pub fn get_all_frequencies() -> Vec<u32> {
   let mut frequency_vec = Vec::<u32>::new();
   unsafe {
-    let mut dev_mode = std::mem::zeroed();
+    let mut dev_mode = mem::zeroed();
     let mut index = 0;
 
     loop {

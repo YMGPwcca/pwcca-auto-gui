@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use std::{mem, path, ptr};
+
 use anyhow::Result;
 use windows::{
   core::{HSTRING, PCWSTR, PWSTR},
@@ -119,8 +121,8 @@ impl RegKey {
         &HSTRING::from(name),
         RRF_RT_ANY,
         None,
-        Some(std::ptr::addr_of_mut!(buffer) as _),
-        Some(std::ptr::addr_of_mut!(size) as _),
+        Some(ptr::addr_of_mut!(buffer) as _),
+        Some(ptr::addr_of_mut!(size) as _),
       );
 
       if result != ERROR_SUCCESS {
@@ -137,7 +139,7 @@ impl RegKey {
     let mut length = split.len() - 1;
     loop {
       let maybe_path = split[..length].join(" ");
-      if std::path::Path::new(&maybe_path).exists() {
+      if path::Path::new(&maybe_path).exists() {
         let maybe_arg = data.split_at(maybe_path.len()).1.to_string();
         return Ok((maybe_path, Some(maybe_arg)));
       }
@@ -147,7 +149,7 @@ impl RegKey {
 
   pub fn is_startup_enabled(&self, value: PCWSTR) -> Result<bool> {
     let mut buffer: [u32; 512] = [0; 512];
-    let mut size = (1024 * std::mem::size_of_val(&buffer[0])) as u32;
+    let mut size = (1024 * mem::size_of_val(&buffer[0])) as u32;
     let mut kind = REG_VALUE_TYPE::default();
 
     unsafe {

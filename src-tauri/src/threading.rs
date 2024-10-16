@@ -1,4 +1,4 @@
-use std::{panic, thread, time::Duration};
+use std::{panic, thread, time};
 
 use crate::{
   mods::{
@@ -61,7 +61,7 @@ pub fn media_thread() -> Result<()> {
       }
     }
 
-    thread::sleep(Duration::from_secs(1));
+    thread::sleep(time::Duration::from_secs(1));
   }
 }
 
@@ -71,10 +71,10 @@ pub fn connection_thread() -> Result<()> {
 
   loop {
     if unsafe { CONFIG.ethernet } {
-      let _ = set_wifi_state(!is_ethernet_plugged_in());
+      set_wifi_state(!is_ethernet_plugged_in());
     }
 
-    std::thread::sleep(Duration::from_secs(1));
+    thread::sleep(time::Duration::from_secs(1));
   }
 }
 
@@ -115,7 +115,7 @@ pub fn power_thread() -> Result<(), WIN32_ERROR> {
       }
     }
 
-    std::thread::sleep(Duration::from_secs(1));
+    thread::sleep(time::Duration::from_secs(1));
   }
 }
 
@@ -128,7 +128,7 @@ pub fn taskbar_thread() {
       taskbar_automation();
     }
 
-    std::thread::sleep(Duration::from_secs(1));
+    thread::sleep(time::Duration::from_secs(1));
   }
 }
 
@@ -173,7 +173,7 @@ pub fn autostart_thread() {
       }
     }
 
-    std::thread::sleep(Duration::from_secs(1));
+    thread::sleep(time::Duration::from_secs(1));
   }
 }
 

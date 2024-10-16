@@ -2,7 +2,7 @@
 
 pub mod types;
 
-use std::{path::Path, str::FromStr};
+use std::{mem, path::Path, str::FromStr};
 
 use types::TaskbarSize;
 use windows::Win32::{
@@ -76,7 +76,7 @@ pub fn taskbar_automation() {
 
 fn hide_taskbar(hide: bool) {
   let mut pdata = APPBARDATA {
-    cbSize: std::mem::size_of::<APPBARDATA>() as u32,
+    cbSize: mem::size_of::<APPBARDATA>() as u32,
     ..Default::default()
   };
   unsafe { SHAppBarMessage(ABM_GETSTATE, &mut pdata) };
@@ -88,7 +88,7 @@ fn hide_taskbar(hide: bool) {
 pub fn get_taskbar_size() -> TaskbarSize {
   let mut taskbar = TaskbarSize::default();
   let mut pdata = APPBARDATA {
-    cbSize: std::mem::size_of::<APPBARDATA>() as u32,
+    cbSize: mem::size_of::<APPBARDATA>() as u32,
     ..APPBARDATA::default()
   };
 

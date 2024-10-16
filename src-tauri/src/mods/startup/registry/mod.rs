@@ -2,7 +2,7 @@
 
 pub mod types;
 
-use std::fs;
+use std::{env, fs};
 
 use anyhow::Result;
 use types::{
@@ -81,8 +81,8 @@ fn get_startup_items_in_folder(group: &StartupGroup) -> Result<Vec<StartupItem>>
   let mut items = Vec::new();
 
   let dir_path = match group {
-    StartupGroup::User => std::env::var("APPDATA")?,
-    StartupGroup::System => std::env::var("PROGRAMDATA")?,
+    StartupGroup::User => env::var("APPDATA")?,
+    StartupGroup::System => env::var("PROGRAMDATA")?,
   } + r"\Microsoft\Windows\Start Menu\Programs\Startup";
 
   let dir_items = fs::read_dir(dir_path)?;

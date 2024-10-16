@@ -1,4 +1,4 @@
-use std::{backtrace::Backtrace, cell::Cell, panic};
+use std::{backtrace::Backtrace, cell::Cell, panic, process};
 
 use windows::{
   core::{w, BSTR},
@@ -57,6 +57,6 @@ where
       )
     };
 
-    std::process::exit(1);
+    process::exit(1);
   }
 }

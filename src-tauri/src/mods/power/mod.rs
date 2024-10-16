@@ -1,6 +1,6 @@
 mod types;
 
-use std::{ffi::OsString, os::windows::ffi::OsStringExt};
+use std::{ffi::OsString, mem, os::windows::ffi::OsStringExt, ptr, slice};
 
 use windows::{
   core::GUID,
@@ -34,11 +34,11 @@ pub fn get_power_status() -> SystemPowerStatus {
 pub fn get_all_power_schemes() -> Result<Vec<PowerScheme>, WIN32_ERROR> {
   let mut power_schemes = Vec::new();
   let mut index = 0;
-  let mut buffersize = std::mem::size_of::<GUID>() as u32;
+  let mut buffersize = mem::size_of::<GUID>() as u32;
 
   loop {
     unsafe {
-      let mut buffer: GUID = std::mem::zeroed();
+      let mut buffer: GUID = mem::zeroed();
 
       let result = PowerEnumerate(
         None,
@@ -71,7 +71,7 @@ pub fn get_all_power_schemes() -> Result<Vec<PowerScheme>, WIN32_ERROR> {
 
 #[allow(dead_code)]
 pub fn get_active_power_scheme() -> Result<PowerScheme, WIN32_ERROR> {
-  let mut buffer = std::ptr::null_mut();
+  let mut buffer = ptr::null_mut();
 
   unsafe {
     let result = PowerGetActiveScheme(None, &mut buffer);
@@ -114,7 +114,7 @@ fn get_power_scheme_friendly_name(scheme_guid: &GUID) -> Result<String, WIN32_ER
       return Err(result);
     }
 
-    let os_str = OsString::from_wide(std::slice::from_raw_parts(
+    let os_str = OsString::from_wide(slice::from_raw_parts(
       buffer.as_ptr() as *const u16,
       buffer_size as usize / 2,
     ));

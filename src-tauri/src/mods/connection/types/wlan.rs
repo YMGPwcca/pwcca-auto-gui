@@ -1,6 +1,7 @@
+#![allow(dead_code)]
+
 use windows::Win32::NetworkManagement::WiFi::{self, WLAN_AVAILABLE_NETWORK, WLAN_BSS_ENTRY};
 
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct Wlan {
   pub kind: String,
@@ -13,8 +14,6 @@ pub struct Wlan {
   pub ratio_type: Vec<String>,
   pub bands: Vec<f32>,
 }
-
-#[allow(dead_code)]
 impl Wlan {
   pub fn new(network: &WLAN_AVAILABLE_NETWORK, bss_entries: Vec<WLAN_BSS_ENTRY>) -> Self {
     Self {

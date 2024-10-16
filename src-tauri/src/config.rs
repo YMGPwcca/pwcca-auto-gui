@@ -1,6 +1,8 @@
 // Mew was here
 #![allow(dead_code)]
 
+use std::{env, fs, path};
+
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
@@ -70,9 +72,9 @@ impl Config {
     }
   }
 
-  fn get_path() -> Result<std::path::PathBuf> {
-    let exe_path = std::env::current_exe()?;
-    let config_path = std::path::Path::new(exe_path.parent().unwrap()).join("config.json");
+  fn get_path() -> Result<path::PathBuf> {
+    let exe_path = env::current_exe()?;
+    let config_path = path::Path::new(exe_path.parent().unwrap()).join("config.json");
     Ok(config_path)
   }
 
@@ -124,14 +126,14 @@ impl Config {
   }
 
   pub fn write(&self) -> Result<Self> {
-    std::fs::write(Config::get_path()?, self.stringify()?)?;
+    fs::write(Config::get_path()?, self.stringify()?)?;
     Ok(self.clone())
   }
 
   pub fn read() -> Result<Self> {
     let path = Config::get_path()?;
     if path.exists() {
-      Ok(serde_json::from_str(&std::fs::read_to_string(path)?)?)
+      Ok(serde_json::from_str(&fs::read_to_string(path)?)?)
     } else {
       let config = Config::new();
       config.write()?;

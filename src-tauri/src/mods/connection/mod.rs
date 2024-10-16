@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 pub mod types;
 
-use types::{error::WlanHandlerError, wlan::Wlan};
+use std::{ffi, mem, ptr, slice};
+
+use types::wlan::Wlan;
 use windows::Win32::{
   Foundation::{ERROR_SUCCESS, HANDLE, WIN32_ERROR},
   NetworkManagement::{
@@ -18,46 +20,43 @@ use windows::Win32::{
   },
 };
 
-fn open_handle() -> Result<HANDLE, WlanHandlerError> {
+fn open_handle() -> Option<HANDLE> {
   let mut handle = HANDLE::default();
   let mut current_version = 0;
 
   let open_handle_result = WIN32_ERROR(unsafe { WlanOpenHandle(2, None, &mut current_version, &mut handle) });
   if open_handle_result != ERROR_SUCCESS {
     unsafe { WlanCloseHandle(handle, None) };
-    return Err(WlanHandlerError::new(open_handle_result));
+    return None;
   }
 
-  Ok(handle)
+  Some(handle)
 }
 
-fn enum_interfaces(handle: &HANDLE) -> Result<Vec<WLAN_INTERFACE_INFO>, WlanHandlerError> {
-  let mut interface_info_list = std::ptr::null_mut();
+fn enum_interfaces(handle: &HANDLE) -> Vec<WLAN_INTERFACE_INFO> {
+  let mut interface_info_list = ptr::null_mut();
 
   unsafe {
     let enum_interfaces_result = WIN32_ERROR(WlanEnumInterfaces(*handle, None, &mut interface_info_list));
     if enum_interfaces_result != ERROR_SUCCESS {
       WlanCloseHandle(*handle, None);
-      return Err(WlanHandlerError::new(enum_interfaces_result));
+      return vec![];
     }
 
     // https://stackoverflow.com/a/78779478/9879620
-    let interface_info_ptr = std::ptr::addr_of!((*interface_info_list).InterfaceInfo);
+    let interface_info_ptr = ptr::addr_of!((*interface_info_list).InterfaceInfo);
     let interface_info_len = (*interface_info_list).dwNumberOfItems as usize;
     let interface_info =
-      std::slice::from_raw_parts(interface_info_ptr.cast::<WLAN_INTERFACE_INFO>(), interface_info_len).to_vec();
+      slice::from_raw_parts(interface_info_ptr.cast::<WLAN_INTERFACE_INFO>(), interface_info_len).to_vec();
 
     WlanFreeMemory(interface_info_list.cast());
 
-    Ok(interface_info)
+    interface_info
   }
 }
 
-fn get_available_network_list(
-  handle: &HANDLE,
-  interface: &WLAN_INTERFACE_INFO,
-) -> Result<Vec<WLAN_AVAILABLE_NETWORK>, WlanHandlerError> {
-  let mut available_network_list = std::ptr::null_mut();
+fn get_available_network_list(handle: &HANDLE, interface: &WLAN_INTERFACE_INFO) -> Vec<WLAN_AVAILABLE_NETWORK> {
+  let mut available_network_list = ptr::null_mut();
 
   unsafe {
     let result = WIN32_ERROR(WlanGetAvailableNetworkList(
@@ -68,17 +67,17 @@ fn get_available_network_list(
       &mut available_network_list,
     ));
     if result != ERROR_SUCCESS {
-      return Err(WlanHandlerError::new(result));
+      return vec![];
     }
 
     // https://stackoverflow.com/a/78779478/9879620
-    let networks_ptr = std::ptr::addr_of!((*available_network_list).Network);
+    let networks_ptr = ptr::addr_of!((*available_network_list).Network);
     let networks_len = (*available_network_list).dwNumberOfItems as usize;
-    let networks = std::slice::from_raw_parts(networks_ptr.cast::<WLAN_AVAILABLE_NETWORK>(), networks_len).to_vec();
+    let networks = slice::from_raw_parts(networks_ptr.cast::<WLAN_AVAILABLE_NETWORK>(), networks_len).to_vec();
 
     WlanFreeMemory(available_network_list.cast());
 
-    Ok(networks)
+    networks
   }
 }
 
@@ -86,55 +85,54 @@ fn get_network_bss_list(
   handle: &HANDLE,
   interface: &WLAN_INTERFACE_INFO,
   network: &WLAN_AVAILABLE_NETWORK,
-) -> Result<Vec<WLAN_BSS_ENTRY>, WlanHandlerError> {
+) -> Vec<WLAN_BSS_ENTRY> {
   unsafe {
-    let mut bssid_list = std::ptr::null_mut();
+    let mut bssid_list = ptr::null_mut();
     let result = WIN32_ERROR(WlanGetNetworkBssList(
       *handle,
       &interface.InterfaceGuid,
-      Some(std::ptr::addr_of!(network.dot11Ssid)),
+      Some(ptr::addr_of!(network.dot11Ssid)),
       network.dot11BssType,
       network.bSecurityEnabled,
       None,
       &mut bssid_list,
     ));
     if result != ERROR_SUCCESS {
-      return Err(WlanHandlerError::new(result));
+      return vec![];
     }
 
     // https://stackoverflow.com/a/78779478/9879620
-    let bss_entries_ptr = std::ptr::addr_of!((*bssid_list).wlanBssEntries);
+    let bss_entries_ptr = ptr::addr_of!((*bssid_list).wlanBssEntries);
     let bss_entries_len = (*bssid_list).dwNumberOfItems as usize;
-    let bss_entries = std::slice::from_raw_parts(bss_entries_ptr.cast::<WLAN_BSS_ENTRY>(), bss_entries_len).to_vec();
+    let bss_entries = slice::from_raw_parts(bss_entries_ptr.cast::<WLAN_BSS_ENTRY>(), bss_entries_len).to_vec();
 
     WlanFreeMemory(bssid_list.cast());
 
-    Ok(bss_entries)
+    bss_entries
   }
 }
 
-pub fn get_available_networks() -> Result<Vec<Wlan>, WlanHandlerError> {
+pub fn get_available_networks() -> Vec<Wlan> {
   let mut network_list: Vec<Wlan> = Vec::new();
 
-  let handle = open_handle()?;
+  if let Some(handle) = open_handle() {
+    for interface in enum_interfaces(&handle) {
+      let available_network_list = get_available_network_list(&handle, &interface);
+      if available_network_list.is_empty() {
+        drop(available_network_list);
+        continue;
+      }
 
-  for interface in enum_interfaces(&handle)? {
-    let available_network_list = get_available_network_list(&handle, &interface);
-    if available_network_list.is_err() {
+      let available_network_list = get_available_network_list(&handle, &interface);
+      for network in &available_network_list {
+        network_list.push(Wlan::new(network, get_network_bss_list(&handle, &interface, network)));
+      }
       drop(available_network_list);
-      continue;
     }
-
-    let available_network_list = get_available_network_list(&handle, &interface)?;
-    for network in &available_network_list {
-      network_list.push(Wlan::new(network, get_network_bss_list(&handle, &interface, network)?));
-    }
-    drop(available_network_list);
+    unsafe { WlanCloseHandle(handle, None) };
   }
 
-  unsafe { WlanCloseHandle(handle, None) };
-
-  Ok(network_list)
+  vec![]
 }
 
 pub fn is_ethernet_plugged_in() -> bool {
@@ -174,33 +172,33 @@ pub fn is_ethernet_plugged_in() -> bool {
   }
 }
 
-pub fn set_wifi_state(on: bool) -> Result<(), WlanHandlerError> {
-  let handle = open_handle()?;
-  let enum_interfaces = enum_interfaces(&handle)?;
+pub fn set_wifi_state(on: bool) {
+  if let Some(handle) = open_handle() {
+    let enum_interfaces = enum_interfaces(&handle);
 
-  let state = WLAN_PHY_RADIO_STATE {
-    dwPhyIndex: 0,
-    dot11SoftwareRadioState: if on {
-      dot11_radio_state_on
-    } else {
-      dot11_radio_state_off
-    },
-    ..Default::default()
-  };
+    let state = WLAN_PHY_RADIO_STATE {
+      dwPhyIndex: 0,
+      dot11SoftwareRadioState: if on {
+        dot11_radio_state_on
+      } else {
+        dot11_radio_state_off
+      },
+      ..Default::default()
+    };
 
-  for interface in enum_interfaces {
-    unsafe {
-      WlanSetInterface(
-        handle,
-        std::ptr::addr_of!(interface.InterfaceGuid),
-        wlan_intf_opcode_radio_state,
-        std::mem::size_of::<WLAN_PHY_RADIO_STATE>() as u32,
-        std::ptr::addr_of!(state) as *const std::ffi::c_void,
-        None,
-      );
+    for interface in enum_interfaces {
+      unsafe {
+        WlanSetInterface(
+          handle,
+          ptr::addr_of!(interface.InterfaceGuid),
+          wlan_intf_opcode_radio_state,
+          mem::size_of::<WLAN_PHY_RADIO_STATE>() as u32,
+          ptr::addr_of!(state) as *const ffi::c_void,
+          None,
+        );
+      }
     }
-  }
 
-  unsafe { WlanCloseHandle(handle, None) };
-  Ok(())
+    unsafe { WlanCloseHandle(handle, None) };
+  }
 }
