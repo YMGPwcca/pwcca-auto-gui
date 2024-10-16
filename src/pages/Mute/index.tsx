@@ -9,21 +9,6 @@ interface Payload {
   rgba: []
 }
 
-async function resizeImageData(imageData: ImageData, width: number, height: number) {
-  const resizeWidth = width >> 0
-  const resizeHeight = height >> 0
-  const ibm = await window.createImageBitmap(imageData, 0, 0, imageData.width, imageData.height, {
-    resizeWidth, resizeHeight
-  })
-  const canvas = document.createElement('canvas')
-  canvas.width = resizeWidth
-  canvas.height = resizeHeight
-  const ctx = canvas.getContext('2d')!
-  ctx.scale(resizeWidth / imageData.width, resizeHeight / imageData.height)
-  ctx.drawImage(ibm, 0, 0)
-  return ctx.getImageData(0, 0, resizeWidth, resizeHeight)
-}
-
 export default function Mute() {
   let [program, setProgram] = useState<Payload>({ mute: false, rgba: [] })
 
@@ -34,8 +19,6 @@ export default function Mute() {
 
   useEffect(() => {
     if (program.rgba.length > 0) {
-      console.log(program.rgba)
-
       clearTimeout(timer.current)
       let currentWindow = getCurrentWindow()
       currentWindow.show()
@@ -49,7 +32,7 @@ export default function Mute() {
         imgData.data[i * 4 + 2] = program.rgba[i][2]
         imgData.data[i * 4 + 3] = program.rgba[i][3]
       }
-      resizeImageData(imgData, 48, 48).then(newData => ctx.putImageData(newData, 0, 0))
+      ctx.putImageData(imgData, 0, 0)
 
       timer.current = setTimeout(() => currentWindow.hide(), 2000)
     }

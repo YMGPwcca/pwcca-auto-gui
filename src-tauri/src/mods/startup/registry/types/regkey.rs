@@ -103,7 +103,7 @@ impl RegKey {
       let result = RegSetValueExW(self.hkey, &HSTRING::from(name), 0, REG_BINARY, Some(&value));
 
       if result != ERROR_SUCCESS {
-        println!("Error setting value: {}", result.to_hresult().message());
+        panic!("Error setting value: {}", result.to_hresult().message());
       }
     }
   }
@@ -124,7 +124,7 @@ impl RegKey {
       );
 
       if result != ERROR_SUCCESS {
-        println!("Error getting value: {}", result.to_hresult().message());
+        panic!("Error getting value: {}", result.to_hresult().message());
       }
     }
 

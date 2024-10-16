@@ -19,7 +19,9 @@ use windows::{
     UI::{
       Controls::{IImageList, ILD_TRANSPARENT},
       Shell::{
-        IShellBrowser, IShellDispatch2, IShellFolderViewDual, IShellView, IShellWindows, IUnknown_QueryService, SHGetFileInfoW, SHGetImageList, SID_STopLevelBrowser, ShellWindows, SHFILEINFOW, SHGFI_SYSICONINDEX, SHIL_EXTRALARGE, SHIL_JUMBO, SVGIO_BACKGROUND, SWC_DESKTOP, SWFO_NEEDDISPATCH
+        IShellBrowser, IShellDispatch2, IShellFolderViewDual, IShellView, IShellWindows, IUnknown_QueryService,
+        SHGetFileInfoW, SHGetImageList, SID_STopLevelBrowser, ShellWindows, SHFILEINFOW, SHGFI_SYSICONINDEX,
+        SHIL_EXTRALARGE, SVGIO_BACKGROUND, SWC_DESKTOP, SWFO_NEEDDISPATCH,
       },
       WindowsAndMessaging::{DestroyIcon, GetForegroundWindow, GetIconInfo, GetWindowThreadProcessId},
     },
