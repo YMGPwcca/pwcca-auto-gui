@@ -2,9 +2,9 @@
 
 use anyhow::Result;
 use windows::Win32::{
-  Foundation::{CloseHandle, HMODULE, MAX_PATH},
+  Foundation::{CloseHandle, MAX_PATH},
   System::{
-    ProcessStatus::{EnumProcessModulesEx, EnumProcesses, GetModuleFileNameExW, LIST_MODULES_ALL},
+    ProcessStatus::{EnumProcesses, GetModuleFileNameExW},
     Threading::{OpenProcess, PROCESS_QUERY_INFORMATION, PROCESS_VM_READ},
   },
 };
@@ -13,7 +13,7 @@ pub fn get_processes_exec_name() -> Result<Vec<String>> {
   Ok(
     get_processes()?
       .iter()
-      .map(get_process_executable_name)
+      .map(|&e| get_process_executable_name(e))
       .filter(|p_name| !p_name.is_empty())
       .collect(),
   )
@@ -28,37 +28,24 @@ fn get_processes() -> Result<Vec<u32>> {
   Ok(pids[0..(size / 4) as usize].to_vec())
 }
 
-pub fn get_process_executable_path(pid: &u32) -> String {
+pub fn get_process_executable_path(pid: u32) -> String {
   unsafe {
-    let handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, *pid);
+    let handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, false, pid);
     if handle.is_ok() {
       let handle = handle.ok().unwrap();
-
-      let mut module = HMODULE::default();
-      let mut size = 0;
-      let result = EnumProcessModulesEx(
-        handle,
-        &mut module,
-        std::mem::size_of::<HMODULE>() as u32,
-        &mut size,
-        LIST_MODULES_ALL,
-      );
-      if result.is_ok() {
-        let mut lpbasename = [0u16; MAX_PATH as usize];
-        GetModuleFileNameExW(handle, module, &mut lpbasename);
-
-        return String::from_utf16_lossy(&lpbasename).replace('\0', "").to_string();
-      }
+      let mut lpbasename = [0u16; MAX_PATH as usize];
+      GetModuleFileNameExW(handle, None, &mut lpbasename);
 
       let _ = CloseHandle(handle);
+
+      return String::from_utf16_lossy(&lpbasename).replace('\0', "").to_string();
     }
   }
 
   String::new()
 }
 
-pub fn get_process_executable_name(pid: &u32) -> String {
-  let path = get_process_executable_path(pid);
+pub fn get_process_executable_name_from_path(path: &str) -> String {
   let last_backslash = path.rfind('\\');
   if let Some(index) = last_backslash {
     return path[index + 1..].to_string();
@@ -67,13 +54,18 @@ pub fn get_process_executable_name(pid: &u32) -> String {
   String::new()
 }
 
+pub fn get_process_executable_name(pid: u32) -> String {
+  let path = get_process_executable_path(pid);
+  get_process_executable_name_from_path(&path)
+}
+
 pub fn get_processes_by_name(name: &str) -> Result<Vec<String>> {
   let pids = get_processes()?;
 
   Ok(
     pids
       .iter()
-      .map(get_process_executable_name)
+      .map(|&e| get_process_executable_name(e))
       .filter(|p_name| p_name == &name.to_lowercase())
       .filter(|p_name| !p_name.is_empty())
       .collect(),

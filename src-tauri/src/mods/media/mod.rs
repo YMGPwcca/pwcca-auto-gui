@@ -139,7 +139,7 @@ impl Media {
         let state = session_control.GetState().expect("Cannot get audio session state");
         if state == AudioSessionStateActive {
           let pid = session_control.GetProcessId().expect("Cannot get active program id");
-          result.push(process::get_process_executable_name(&pid));
+          result.push(process::get_process_executable_name(pid));
         }
       }
 
@@ -175,7 +175,7 @@ impl Media {
         let state = session_control.GetState().expect("Cannot get audio session state");
         if state == AudioSessionStateActive {
           let pid = session_control.GetProcessId().expect("Cannot get active program id");
-          let name = process::get_process_executable_name(&pid);
+          let name = process::get_process_executable_name(pid);
 
           if name == program {
             let simple_volume = session_control
@@ -219,7 +219,7 @@ impl Media {
         let state = session_control.GetState().expect("Cannot get audio session state");
         if state == AudioSessionStateActive {
           let pid = session_control.GetProcessId().expect("Cannot get active program id");
-          let name = process::get_process_executable_name(&pid);
+          let name = process::get_process_executable_name(pid);
 
           if name == program {
             let simple_volume = session_control

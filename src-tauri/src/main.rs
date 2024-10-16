@@ -13,7 +13,7 @@ use config::Config;
 use mods::{
   media::Media,
   power::get_power_status,
-  process::{get_process_executable_name, get_processes_by_name},
+  process::{get_process_executable_name_from_path, get_process_executable_path, get_processes_by_name},
   program::Program,
   startup::task_scheduler::TaskScheduler,
 };
@@ -95,7 +95,7 @@ fn build_tauri() -> Builder<Wry> {
       let monitor = window.current_monitor().expect("Cannot get current monitor").unwrap();
       let monitor_size = monitor.size();
 
-      let mute_size = PhysicalSize::new(200, 100);
+      let mute_size = PhysicalSize::new(140, 80);
       let mute_position = PhysicalPosition::new(monitor_size.width - (mute_size.width + 20), 20);
       let mute_view = handle.get_webview_window("mute").unwrap();
       mute_view.set_size(mute_size).expect("Cannot set mute view size");
@@ -115,19 +115,27 @@ fn build_tauri() -> Builder<Wry> {
               if shortcut == &win_f2_shortcut && event.state() == ShortcutState::Released {
                 #[derive(Clone, serde::Serialize)]
                 struct Payload {
-                  name: String,
                   mute: bool,
+                  rgba: Vec<Vec<u8>>,
                 }
 
                 let pid = Program::get_foreground_program();
-                let name = get_process_executable_name(&pid);
+                let path = get_process_executable_path(pid);
+                let name = get_process_executable_name_from_path(&path);
+                let icon_rgba = Program::get_icon(&path);
                 let media = Media::new().expect("Cannot initialize media module");
 
                 if let Some(mute) = media.get_mute_program(&name) {
-                  println!("{:?}", "YES");
                   media.set_mute_program(&name, !mute);
                   handle
-                    .emit_to("mute", "program_name", Payload { name, mute: !mute })
+                    .emit_to(
+                      "mute",
+                      "program_name",
+                      Payload {
+                        mute: !mute,
+                        rgba: icon_rgba,
+                      },
+                    )
                     .expect("Cannot emit to mute_window");
                 }
               }

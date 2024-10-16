@@ -1,20 +1,27 @@
 #![allow(dead_code)]
 
+use std::{
+  mem::{self},
+  ptr::{self},
+};
+
 use anyhow::{Error, Result};
 use windows::{
   core::{Interface, BSTR, VARIANT},
   Win32::{
     Foundation::HWND,
+    Graphics::Gdi::{DeleteObject, GetDC, GetDIBits, GetObjectW, ReleaseDC, BITMAP, BITMAPINFOHEADER, DIB_RGB_COLORS},
+    Storage::FileSystem::SECURITY_ANONYMOUS,
     System::Com::{
       CoCreateInstance, CoInitializeEx, CoUninitialize, IDispatch, CLSCTX_LOCAL_SERVER, COINIT_APARTMENTTHREADED,
       COINIT_DISABLE_OLE1DDE,
     },
     UI::{
+      Controls::{IImageList, ILD_TRANSPARENT},
       Shell::{
-        IShellBrowser, IShellDispatch2, IShellFolderViewDual, IShellView, IShellWindows, IUnknown_QueryService,
-        SID_STopLevelBrowser, ShellWindows, SVGIO_BACKGROUND, SWC_DESKTOP, SWFO_NEEDDISPATCH,
+        IShellBrowser, IShellDispatch2, IShellFolderViewDual, IShellView, IShellWindows, IUnknown_QueryService, SHGetFileInfoW, SHGetImageList, SID_STopLevelBrowser, ShellWindows, SHFILEINFOW, SHGFI_SYSICONINDEX, SHIL_EXTRALARGE, SHIL_JUMBO, SVGIO_BACKGROUND, SWC_DESKTOP, SWFO_NEEDDISPATCH
       },
-      WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId},
+      WindowsAndMessaging::{DestroyIcon, GetForegroundWindow, GetIconInfo, GetWindowThreadProcessId},
     },
   },
 };
@@ -112,6 +119,85 @@ impl Program {
       let mut pid = 0;
       GetWindowThreadProcessId(foreground, Some(&mut pid));
       pid
+    }
+  }
+
+  pub fn get_icon(path: &str) -> Vec<Vec<u8>> {
+    unsafe {
+      let path = &BSTR::from(path);
+
+      let mut sfi = SHFILEINFOW::default();
+      SHGetFileInfoW(
+        path,
+        SECURITY_ANONYMOUS,
+        Some(&mut sfi),
+        mem::size_of_val(&sfi) as u32,
+        SHGFI_SYSICONINDEX,
+      );
+
+      let ret = SHGetImageList::<IImageList>(SHIL_EXTRALARGE as i32).expect("Cannot get image list");
+      let hicon = ret.GetIcon(sfi.iIcon, ILD_TRANSPARENT.0).expect("Cannot get icon");
+
+      let bitmap_size = mem::size_of::<BITMAP>() as i32;
+      let biheader_size = mem::size_of::<BITMAPINFOHEADER>() as u32;
+
+      let mut info = mem::MaybeUninit::uninit();
+      GetIconInfo(hicon, info.as_mut_ptr()).expect("Cannot get icon info");
+      let info = info.assume_init_ref();
+      DeleteObject(info.hbmMask).expect("Cannot delete object");
+      DestroyIcon(hicon).expect("Cannot destroy icon");
+
+      let mut bitmap: mem::MaybeUninit<BITMAP> = mem::MaybeUninit::uninit();
+      if GetObjectW(info.hbmColor, bitmap_size, Some(bitmap.as_mut_ptr().cast())) != bitmap_size {
+        panic!("Cannot object size is not equal to bitmap size");
+      }
+
+      let bitmap = bitmap.assume_init_ref();
+
+      let width = bitmap.bmWidth as usize;
+      let height = bitmap.bmHeight as usize;
+
+      let buf_size = width
+        .checked_mul(height)
+        .and_then(|size| size.checked_mul(4))
+        .expect("Cannot get buffer size");
+      let mut buf: Vec<u8> = Vec::with_capacity(buf_size);
+
+      let dc = GetDC(HWND(ptr::null_mut()));
+      let mut bitmap_info = BITMAPINFOHEADER {
+        biSize: biheader_size,
+        biWidth: bitmap.bmWidth,
+        biHeight: -bitmap.bmHeight,
+        biPlanes: 1,
+        biBitCount: 32,
+        ..BITMAPINFOHEADER::default()
+      };
+      GetDIBits(
+        dc,
+        info.hbmColor,
+        0,
+        bitmap.bmHeight as u32,
+        Some(buf.as_mut_ptr().cast()),
+        ptr::addr_of_mut!(bitmap_info).cast(),
+        DIB_RGB_COLORS,
+      );
+      buf.set_len(buf.capacity());
+
+      if ReleaseDC(HWND(std::ptr::null_mut()), dc) != 1 {
+        panic!("Cannot release Device Context")
+      }
+
+      DeleteObject(info.hbmColor).expect("Cannot delete object");
+
+      let mut rgba_data = vec![];
+      for chunk in buf.chunks_exact_mut(4) {
+        let [b, _, r, _] = chunk else { unreachable!() };
+        mem::swap(b, r);
+
+        rgba_data.push(chunk.to_vec());
+      }
+
+      rgba_data
     }
   }
 }
