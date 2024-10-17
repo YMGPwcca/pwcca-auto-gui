@@ -12,9 +12,9 @@ use windows::{
     Devices::FunctionDiscovery::{PKEY_DeviceInterface_FriendlyName, PKEY_Device_DeviceDesc},
     Foundation::{BOOL, S_OK},
     Media::Audio::{
-      eCapture, eCommunications, eConsole, eRender, AudioSessionStateActive, IAudioSessionControl2,
-      IAudioSessionManager2, IMMDevice, IMMDeviceEnumerator, ISimpleAudioVolume, MMDeviceEnumerator,
-      DEVICE_STATE_ACTIVE,
+      eCapture, eCommunications, eConsole, eRender, AudioSessionStateActive, Endpoints::IAudioEndpointVolume,
+      IAudioSessionControl2, IAudioSessionManager2, IMMDevice, IMMDeviceEnumerator, ISimpleAudioVolume,
+      MMDeviceEnumerator, DEVICE_STATE_ACTIVE,
     },
     System::Com::{CoCreateInstance, CoInitialize, CoUninitialize, CLSCTX_ALL, STGM_READ},
   },
@@ -39,7 +39,7 @@ impl Media {
     }
   }
 
-  fn get_device_info(&self, device: &IMMDevice) -> Result<Device> {
+  fn get_device_info(&self, device: &IMMDevice) -> Device {
     unsafe {
       let property_store = device.OpenPropertyStore(STGM_READ).expect("Cannot open property store");
       let device_id = device.GetId().expect("Cannot get device id");
@@ -52,16 +52,16 @@ impl Media {
         .expect("Cannot get device name")
         .to_string();
 
-      Ok(Device {
+      Device {
         device_object: device.clone(),
         device_id,
         device_type,
         device_name,
-      })
+      }
     }
   }
 
-  pub fn get_default_device(&self, device_type: &DeviceType) -> Result<Device> {
+  pub fn get_default_device(&self, device_type: &DeviceType) -> Device {
     unsafe {
       let device = match device_type {
         DeviceType::Input => self
@@ -78,18 +78,16 @@ impl Media {
     }
   }
 
-  pub fn change_default_output(&self, device_id: PWSTR) -> Result<()> {
+  pub fn change_default_output(&self, device_id: PWSTR) {
     unsafe {
       let policy = policy_config::IPolicyConfig::new().expect("Cannot initialize policy configuration");
       policy
         .SetDefaultEndpoint(PCWSTR(device_id.as_ptr()), eConsole)
         .expect("Cannot set default endpoint");
-
-      Ok(())
     }
   }
 
-  pub fn list_all_audio_devices(&self, device_type: &DeviceType) -> Result<Vec<Device>> {
+  pub fn list_all_audio_devices(&self, device_type: &DeviceType) -> Vec<Device> {
     let mut all_devices = Vec::<Device>::new();
 
     unsafe {
@@ -105,16 +103,16 @@ impl Media {
       };
       for i in 0..devices.GetCount().expect("Cannot get devices count") {
         let device = devices.Item(i).expect("Cannot get audio item");
-        all_devices.push(self.get_device_info(&device).expect("Cannot get device info"));
+        all_devices.push(self.get_device_info(&device));
       }
 
-      Ok(all_devices)
+      all_devices
     }
   }
 
-  pub fn get_active_audio_programs(&self, device_type: &DeviceType) -> Result<Vec<String>> {
+  pub fn get_active_audio_programs(&self, device_type: &DeviceType) -> Vec<String> {
     let mut result = Vec::<String>::new();
-    let device = self.get_default_device(device_type).expect("Cannot get default device");
+    let device = self.get_default_device(device_type);
 
     unsafe {
       let session_manager: IAudioSessionManager2 = device
@@ -143,14 +141,36 @@ impl Media {
         }
       }
 
-      Ok(result)
+      result
     }
   }
 
-  pub fn set_mute_program(&self, program: &str, mute: bool) {
-    let device = self
-      .get_default_device(&DeviceType::Output)
-      .expect("Cannot get default output device");
+  pub fn set_system_mute(&self, mute: bool) {
+    let default_device_object = self.get_default_device(&DeviceType::Output).device_object;
+    unsafe {
+      let audio_enpoint: IAudioEndpointVolume = default_device_object
+        .Activate(CLSCTX_ALL, None)
+        .expect("Cannot create COM object");
+
+      audio_enpoint
+        .SetMute(BOOL(mute.into()), &GUID::zeroed())
+        .expect("Cannot set system mute state");
+    }
+  }
+
+  pub fn get_system_mute(&self) -> bool {
+    let default_device_object = self.get_default_device(&DeviceType::Output).device_object;
+    unsafe {
+      let audio_enpoint: IAudioEndpointVolume = default_device_object
+        .Activate(CLSCTX_ALL, None)
+        .expect("Cannot create COM object");
+
+      audio_enpoint.GetMute().expect("Cannot get system mute state").as_bool()
+    }
+  }
+
+  pub fn set_program_mute(&self, program: &str, mute: bool) {
+    let device = self.get_default_device(&DeviceType::Output);
 
     unsafe {
       let session_manager: IAudioSessionManager2 = device
@@ -191,10 +211,8 @@ impl Media {
     }
   }
 
-  pub fn get_mute_program(&self, program: &str) -> Option<bool> {
-    let device = self
-      .get_default_device(&DeviceType::Output)
-      .expect("Cannot get default output device");
+  pub fn get_program_mute(&self, program: &str) -> Option<bool> {
+    let device = self.get_default_device(&DeviceType::Output);
 
     unsafe {
       let session_manager: IAudioSessionManager2 = device

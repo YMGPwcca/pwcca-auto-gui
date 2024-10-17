@@ -28,12 +28,12 @@ pub fn media_thread() -> Result<()> {
     if unsafe { CONFIG.microphone.enabled } {
       let config_includes = unsafe { &CONFIG.microphone.apps };
 
-      let all_outputs = media.list_all_audio_devices(&DeviceType::Output)?;
+      let all_outputs = media.list_all_audio_devices(&DeviceType::Output);
 
       if all_outputs.len() > 1 {
-        let current_output = media.get_default_device(&DeviceType::Output)?;
+        let current_output = media.get_default_device(&DeviceType::Output);
 
-        let programs = media.get_active_audio_programs(&DeviceType::Input)?;
+        let programs = media.get_active_audio_programs(&DeviceType::Input);
 
         if config_includes.iter().any(|e| programs.contains(e)) {
           connected = true;
@@ -44,7 +44,7 @@ pub fn media_thread() -> Result<()> {
               .find(|device| device.device_type == "Headphones" || device.device_type == "Headset")
               .unwrap();
 
-            media.change_default_output(headphones.device_id)?
+            media.change_default_output(headphones.device_id)
           }
         } else if connected {
           connected = false;
@@ -55,7 +55,7 @@ pub fn media_thread() -> Result<()> {
               .find(|device| device.device_type == "Speakers")
               .unwrap();
 
-            media.change_default_output(headphones.device_id)?
+            media.change_default_output(headphones.device_id)
           }
         }
       }

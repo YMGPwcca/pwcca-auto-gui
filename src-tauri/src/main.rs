@@ -105,39 +105,43 @@ fn build_tauri() -> Builder<Wry> {
       mute_view
         .set_ignore_cursor_events(true)
         .expect("Cannot set ignore cursor events for mute view");
-      mute_view.open_devtools();
 
-      let win_f2_shortcut = Shortcut::new(Some(Modifiers::SUPER), Code::F2);
+      let win_f2 = Shortcut::new(Some(Modifiers::SUPER), Code::F2);
+      let win_shift_f2 = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::F2);
       handle
         .plugin(
           tauri_plugin_global_shortcut::Builder::new()
             .with_handler(move |handle, shortcut, event| {
-              if shortcut == &win_f2_shortcut && event.state() == ShortcutState::Released {
-                #[derive(Clone, serde::Serialize)]
-                struct Payload {
-                  mute: bool,
-                  rgba: Vec<Vec<u8>>,
-                }
+              let media = Media::new().expect("Cannot initialize media module");
 
+              if shortcut == &win_f2 && event.state() == ShortcutState::Released {
                 let pid = Program::get_foreground_program();
                 let path = get_process_executable_path(pid);
                 let name = get_process_executable_name_from_path(&path);
                 let icon_rgba = Program::get_icon(&path);
-                let media = Media::new().expect("Cannot initialize media module");
 
-                if let Some(mute) = media.get_mute_program(&name) {
-                  media.set_mute_program(&name, !mute);
+                if let Some(mute) = media.get_program_mute(&name) {
+                  media.set_program_mute(&name, !mute);
                   handle
                     .emit_to(
                       "mute",
-                      "program_name",
-                      Payload {
-                        mute: !mute,
-                        rgba: icon_rgba,
-                      },
+                      "program",
+                      serde_json::json!({ "mute": !mute, "icon": icon_rgba }),
                     )
                     .expect("Cannot emit to mute_window");
                 }
+              }
+
+              if shortcut == &win_shift_f2 && event.state() == ShortcutState::Released {
+                let mute = media.get_system_mute();
+                media.set_system_mute(!mute);
+                handle
+                  .emit_to(
+                    "mute",
+                    "system",
+                    serde_json::json!({ "mute": !mute, "icon": Vec::<u8>::new() }),
+                  )
+                  .expect("Cannot emit to mute_window");
               }
             })
             .build(),
@@ -145,7 +149,7 @@ fn build_tauri() -> Builder<Wry> {
         .expect("Cannot build global shortcut");
       app
         .global_shortcut()
-        .register(win_f2_shortcut)
+        .register_multiple(vec![win_f2, win_shift_f2])
         .expect("Cannot register global shortcut");
 
       Ok(())
